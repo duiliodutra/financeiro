@@ -162,11 +162,11 @@ tr:hover .action-btn{opacity:1}
     <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:center">
       <div class="prev-row">
         <span style="font-size:13px;color:#888">Prev. recebimento:</span>
-        <input class="prev-input" type="number" id="prev-rec" value="131000" oninput="renderDash()">
+        <input class="prev-input" type="number" id="prev-rec" value="131000" oninput="renderDash();save()">
       </div>
       <div class="prev-row">
         <span style="font-size:13px;color:#888">Em conta agora:</span>
-        <input class="prev-input" type="number" id="em-conta" value="3000" oninput="renderDash()">
+        <input class="prev-input" type="number" id="em-conta" value="3000" oninput="renderDash();save()">
       </div>
     </div>
     <button class="export-btn" onclick="exportCSV()">⬇️ Exportar CSV</button>
@@ -193,9 +193,9 @@ tr:hover .action-btn{opacity:1}
   </div>
   <div class="card">
     <div class="card-title">Links internet <button class="add-btn" onclick="openModal('link')">＋ Novo</button></div>
-    <table><thead><tr><th style="width:30px"></th><th>Descrição</th><th style="width:100px">Total</th><th style="width:70px">Status</th></tr></thead>
+    <table><thead><tr><th style="width:30px"></th><th>Descrição</th><th style="width:100px">Total</th><th style="width:90px">Vencimento</th><th style="width:30px"></th></tr></thead>
     <tbody id="tb-links"></tbody>
-    <tfoot><tr class="total-row"><td colspan="2">Pendente</td><td id="tot-links"></td><td></td></tr></tfoot></table>
+    <tfoot><tr class="total-row"><td colspan="2">Pendente</td><td id="tot-links"></td><td colspan="2"></td></tr></tfoot></table>
   </div>
   <div class="card">
     <div class="card-title">Outras contas empresa <button class="add-btn" onclick="openModal('empresa-novo')">＋ Nova</button></div>
@@ -206,13 +206,13 @@ tr:hover .action-btn{opacity:1}
   <div class="grid2">
     <div class="card">
       <div class="card-title">Cartões não pessoais <button class="add-btn" onclick="openModal('cartao')">＋ Novo</button></div>
-      <table><thead><tr><th style="width:30px"></th><th>Cartão</th><th style="width:100px">Total</th><th style="width:70px">Status</th><th style="width:30px"></th></tr></thead>
+      <table><thead><tr><th style="width:30px"></th><th>Cartão</th><th style="width:100px">Total</th><th style="width:90px">Vencimento</th><th style="width:30px"></th></tr></thead>
       <tbody id="tb-cartoes"></tbody>
       <tfoot><tr class="total-row"><td colspan="2">Pendente</td><td id="tot-cartoes"></td><td colspan="2"></td></tr></tfoot></table>
     </div>
     <div class="card">
       <div class="card-title">Empréstimos <button class="add-btn" onclick="openModal('emp')">＋ Novo</button></div>
-      <table><thead><tr><th style="width:30px"></th><th>Descrição</th><th style="width:100px">Total</th><th style="width:70px">Status</th><th style="width:30px"></th></tr></thead>
+      <table><thead><tr><th style="width:30px"></th><th>Descrição</th><th style="width:100px">Total</th><th style="width:90px">Vencimento</th><th style="width:30px"></th></tr></thead>
       <tbody id="tb-emp"></tbody>
       <tfoot><tr class="total-row"><td colspan="2">Pendente</td><td id="tot-emp"></td><td colspan="2"></td></tr></tfoot></table>
     </div>
@@ -332,14 +332,14 @@ tr:hover .action-btn{opacity:1}
 <div class="modal-overlay" id="m-cartao"><div class="modal"><h3>Novo cartão</h3>
   <div class="form-row"><label>Nome</label><input type="text" id="ct-nome"></div>
   <div class="form-row"><label>Total (R$)</label><input type="number" id="ct-tot" step="0.01"></div>
-  <div class="form-row"><label>Pago (R$)</label><input type="number" id="ct-pag" step="0.01"></div>
+  <div class="form-row"><label>Vencimento</label><input type="date" id="ct-venc"></div>
   <div class="form-actions"><button class="btn-cancel" onclick="closeModal('cartao')">Cancelar</button><button class="btn-primary" onclick="addCartao()">Salvar</button></div>
 </div></div>
 
 <div class="modal-overlay" id="m-emp"><div class="modal"><h3>Novo empréstimo</h3>
   <div class="form-row"><label>Descrição</label><input type="text" id="em-desc"></div>
   <div class="form-row"><label>Total (R$)</label><input type="number" id="em-tot" step="0.01"></div>
-  <div class="form-row"><label>Pago (R$)</label><input type="number" id="em-pag" step="0.01"></div>
+  <div class="form-row"><label>Vencimento</label><input type="date" id="em-venc"></div>
   <div class="form-actions"><button class="btn-cancel" onclick="closeModal('emp')">Cancelar</button><button class="btn-primary" onclick="addEmprestimo()">Salvar</button></div>
 </div></div>
 
@@ -388,7 +388,7 @@ tr:hover .action-btn{opacity:1}
 <div class="modal-overlay" id="m-link"><div class="modal"><h3>Novo link</h3>
   <div class="form-row"><label>Descrição</label><input type="text" id="lk-desc"></div>
   <div class="form-row"><label>Total (R$)</label><input type="number" id="lk-tot" step="0.01"></div>
-  <div class="form-row"><label>Pago (R$)</label><input type="number" id="lk-pag" step="0.01"></div>
+  <div class="form-row"><label>Vencimento</label><input type="date" id="lk-venc"></div>
   <div class="form-actions"><button class="btn-cancel" onclick="closeModal('link')">Cancelar</button><button class="btn-primary" onclick="addLink()">Salvar</button></div>
 </div></div>
 
@@ -964,9 +964,9 @@ function addCartaoPes(){const desc=gv('cpn-desc'),val=gn('cpn-val'),venc=gv('cpn
 function addBoleto(){const desc=gv('bn-desc'),val=gn('bn-val'),venc=gv('bn-venc');if(!desc||!val)return;D.boletos.push({desc,val,pago:false,venc});gi('bn-desc').value='';gi('bn-val').value='';gi('bn-venc').value='';save();closeModal('boleto-novo');renderAll();}
 function addEmpresa(){const desc=gv('en-desc'),val=gn('en-val'),venc=gv('en-venc');if(!desc||!val)return;D.empresa.push({desc,val,pago:false,venc});gi('en-desc').value='';gi('en-val').value='';gi('en-venc').value='';save();closeModal('empresa-novo');renderAll();}
 function addPessoal(){const desc=gv('pn-desc'),val=gn('pn-val'),venc=gv('pn-venc');if(!desc||!val)return;D.pessoal.push({desc,val,pago:false,venc});gi('pn-desc').value='';gi('pn-val').value='';gi('pn-venc').value='';save();closeModal('pessoal-novo');renderAll();}
-function addCartao(){const nome=gv('ct-nome'),total=gn('ct-tot'),pago=gn('ct-pag');if(!nome)return;D.cartoes.push({nome,total,pago});gi('ct-nome').value='';gi('ct-tot').value='';gi('ct-pag').value='';save();closeModal('cartao');renderAll();}
-function addEmprestimo(){const desc=gv('em-desc'),total=gn('em-tot'),pago=gn('em-pag');if(!desc)return;D.emprestimos.push({desc,total,pago});gi('em-desc').value='';gi('em-tot').value='';gi('em-pag').value='';save();closeModal('emp');renderAll();}
-function addLink(){const desc=gv('lk-desc'),total=gn('lk-tot'),pago=gn('lk-pag');if(!desc)return;D.links.push({desc,total,pago});gi('lk-desc').value='';gi('lk-tot').value='';gi('lk-pag').value='';save();closeModal('link');renderAll();}
+function addCartao(){const nome=gv('ct-nome'),total=gn('ct-tot'),venc=gv('ct-venc');if(!nome)return;D.cartoes.push({nome,total,pago:false,venc});gi('ct-nome').value='';gi('ct-tot').value='';gi('ct-venc').value='';save();closeModal('cartao');renderAll();}
+function addEmprestimo(){const desc=gv('em-desc'),total=gn('em-tot'),venc=gv('em-venc');if(!desc)return;D.emprestimos.push({desc,total,pago:false,venc});gi('em-desc').value='';gi('em-tot').value='';gi('em-venc').value='';save();closeModal('emp');renderAll();}
+function addLink(){const desc=gv('lk-desc'),total=gn('lk-tot'),venc=gv('lk-venc');if(!desc)return;D.links.push({desc,total,pago:false,venc});gi('lk-desc').value='';gi('lk-tot').value='';gi('lk-venc').value='';save();closeModal('link');renderAll();}
 function addPessoa(key,sub,mKey,dId,vId){const desc=gv(dId),val=gn(vId);if(!desc||!val)return;D[key][sub].push({desc,val,pago:false});gi(dId).value='';gi(vId).value='';save();closeModal(mKey);renderAll();}
 
 function renderPessoaTable(key,sub,tbodyId,totId){
@@ -1019,12 +1019,11 @@ function renderCartoes(){
       <td><input type="checkbox" ${c.pago?'checked':''} onchange="D.cartoes[${i}].pago=this.checked;save();renderAll()"></td>
       <td>${c.nome}</td>
       <td style="text-align:right">${brl(c.total)}</td>
-      <td><span class="badge ${c.pago?'badge-paid':'badge-pending'}">${c.pago?'Pago':'Pend.'}</span></td>
+      <td style="text-align:center">${vencBadge(c.venc||'',c.pago)}</td>
       <td><button class="action-btn" onclick="D.cartoes.splice(${i},1);save();renderAll()" title="Excluir">🗑️</button></td>
     </tr>`;
   }).join('');
   gi('tot-cartoes').textContent=brl(tt);
-  // atualizar cabeçalho da tabela de cartões se necessário
   let et=0;
   gi('tb-emp').innerHTML=D.emprestimos.map((e,i)=>{
     if(!e.pago)et+=e.total;
@@ -1032,7 +1031,7 @@ function renderCartoes(){
       <td><input type="checkbox" ${e.pago?'checked':''} onchange="D.emprestimos[${i}].pago=this.checked;save();renderAll()"></td>
       <td>${e.desc}</td>
       <td style="text-align:right">${brl(e.total)}</td>
-      <td><span class="badge ${e.pago?'badge-paid':'badge-pending'}">${e.pago?'Pago':'Pend.'}</span></td>
+      <td style="text-align:center">${vencBadge(e.venc||'',e.pago)}</td>
       <td><button class="action-btn" onclick="D.emprestimos.splice(${i},1);save();renderAll()" title="Excluir">🗑️</button></td>
     </tr>`;
   }).join('');
@@ -1047,7 +1046,8 @@ function renderLinks(){
       <td><input type="checkbox" ${l.pago?'checked':''} onchange="D.links[${i}].pago=this.checked;save();renderAll()"></td>
       <td>${l.desc}</td>
       <td style="text-align:right">${brl(l.total)}</td>
-      <td><span class="badge ${l.pago?'badge-paid':'badge-pending'}">${l.pago?'Pago':'Pend.'}</span></td>
+      <td style="text-align:center">${vencBadge(l.venc||'',l.pago)}</td>
+      <td><button class="action-btn" onclick="D.links.splice(${i},1);save();renderAll()" title="Excluir">🗑️</button></td>
     </tr>`;
   }).join('');
   gi('tot-links').textContent=brl(lt);
