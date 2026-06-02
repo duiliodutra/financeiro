@@ -185,39 +185,43 @@ tr:hover .action-btn{opacity:1}
 
 <!-- EMPRESA -->
 <div id="sec-empresa" class="section">
-  <div class="card">
-    <div class="card-title">Boletos <button class="add-btn" onclick="openModal('boleto-novo')">＋ Novo</button></div>
-    <table><thead><tr><th style="width:30px"></th><th>Descrição</th><th style="width:110px">Valor</th><th style="width:90px">Vencimento</th><th style="width:70px">Status</th><th style="width:60px"></th></tr></thead>
-    <tbody id="tb-boletos"></tbody>
-    <tfoot><tr class="total-row"><td colspan="2">Total</td><td id="tot-boletos"></td><td colspan="3"></td></tr></tfoot></table>
-  </div>
-  <div class="card">
-    <div class="card-title">Links internet <button class="add-btn" onclick="openModal('link')">＋ Novo</button></div>
-    <table><thead><tr><th style="width:30px"></th><th>Descrição</th><th style="width:100px">Total</th><th style="width:90px">Vencimento</th><th style="width:30px"></th></tr></thead>
-    <tbody id="tb-links"></tbody>
-    <tfoot><tr class="total-row"><td colspan="2">Pendente</td><td id="tot-links"></td><td colspan="2"></td></tr></tfoot></table>
-  </div>
-  <div class="card">
-    <div class="card-title">Outras contas empresa <button class="add-btn" onclick="openModal('empresa-novo')">＋ Nova</button></div>
-    <table><thead><tr><th style="width:30px"></th><th>Descrição</th><th style="width:110px">Valor</th><th style="width:90px">Vencimento</th><th style="width:70px">Status</th><th style="width:60px"></th></tr></thead>
-    <tbody id="tb-empresa"></tbody>
-    <tfoot><tr class="total-row"><td colspan="2">Total</td><td id="tot-empresa"></td><td colspan="3"></td></tr></tfoot></table>
-  </div>
-  <div class="grid2">
-    <div class="card">
-      <div class="card-title">Cartões não pessoais <button class="add-btn" onclick="openModal('cartao')">＋ Novo</button></div>
-      <table><thead><tr><th style="width:30px"></th><th>Cartão</th><th style="width:100px">Total</th><th style="width:90px">Vencimento</th><th style="width:30px"></th></tr></thead>
-      <tbody id="tb-cartoes"></tbody>
-      <tfoot><tr class="total-row"><td colspan="2">Pendente</td><td id="tot-cartoes"></td><td colspan="2"></td></tr></tfoot></table>
-    </div>
-    <div class="card">
-      <div class="card-title">Empréstimos <button class="add-btn" onclick="openModal('emp')">＋ Novo</button></div>
-      <table><thead><tr><th style="width:30px"></th><th>Descrição</th><th style="width:100px">Total</th><th style="width:90px">Vencimento</th><th style="width:30px"></th></tr></thead>
-      <tbody id="tb-emp"></tbody>
-      <tfoot><tr class="total-row"><td colspan="2">Pendente</td><td id="tot-emp"></td><td colspan="2"></td></tr></tfoot></table>
-    </div>
+  <div id="empresa-blocks-container"></div>
+  <!-- containers ocultos para compatibilidade -->
+  <div style="display:none">
+    <tbody id="tb-boletos"></tbody><span id="tot-boletos"></span>
+    <tbody id="tb-links"></tbody><span id="tot-links"></span>
+    <tbody id="tb-empresa"></tbody><span id="tot-empresa"></span>
+    <tbody id="tb-cartoes"></tbody><span id="tot-cartoes"></span>
+    <tbody id="tb-emp"></tbody><span id="tot-emp"></span>
   </div>
 </div>
+
+<!-- Modal grupo empresa -->
+<div class="modal-overlay" id="m-grupo-emp-novo"><div class="modal"><h3>Novo grupo empresa</h3>
+  <div class="form-row"><label>Nome do grupo</label><input type="text" id="gen-nome" placeholder="Ex: Fornecedores, Impostos..."></div>
+  <div class="form-row"><label>Tipo</label>
+    <select id="gen-tipo" style="font-size:13px;padding:7px 10px;border:1px solid #ddd;border-radius:8px;background:#fff;color:#1a1a1a;width:100%">
+      <option value="pagar">A pagar (saída)</option>
+      <option value="receber">A receber (entrada)</option>
+      <option value="ambos">Ambos</option>
+    </select>
+  </div>
+  <div class="form-row"><label>Posição</label>
+    <select id="gen-pos" style="font-size:13px;padding:7px 10px;border:1px solid #ddd;border-radius:8px;background:#fff;color:#1a1a1a;width:100%">
+      <option value="fim">No final</option>
+      <option value="inicio">No início</option>
+    </select>
+  </div>
+  <div class="form-actions"><button class="btn-cancel" onclick="closeModal('grupo-emp-novo')">Cancelar</button><button class="btn-primary" onclick="addGrupoEmp()">Criar</button></div>
+</div></div>
+
+<!-- Modal item grupo empresa -->
+<div class="modal-overlay" id="m-grupo-emp-item"><div class="modal"><h3 id="grupo-emp-item-title">Nova entrada</h3>
+  <div class="form-row"><label>Descrição</label><input type="text" id="gei-desc" placeholder="Descrição"></div>
+  <div class="form-row"><label>Valor (R$)</label><input type="number" id="gei-val" step="0.01"></div>
+  <div class="form-row"><label>Vencimento</label><input type="date" id="gei-data"></div>
+  <div class="form-actions"><button class="btn-cancel" onclick="closeModal('grupo-emp-item')">Cancelar</button><button class="btn-primary" onclick="addGrupoEmpItem()">Salvar</button></div>
+</div></div>
 
 <!-- FUNCIONÁRIOS -->
 <div id="sec-funcionarios" class="section">
@@ -227,79 +231,56 @@ tr:hover .action-btn{opacity:1}
 
 <!-- PESSOAL -->
 <div id="sec-pessoal" class="section">
-  <div class="card">
-    <div class="card-title">Contas pessoais <button class="add-btn" onclick="openModal('pessoal-novo')">+ Nova</button></div>
-    <table><thead><tr><th style="width:30px"></th><th>Descricao</th><th style="width:110px">Valor</th><th style="width:90px">Vencimento</th><th style="width:70px">Status</th><th style="width:60px"></th></tr></thead>
+  <!-- containers fixos que o renderPessoalBlocks vai preencher dinamicamente -->
+  <div id="pessoal-blocks-container"></div>
+
+  <!-- containers de tabelas fixas (usados pelos renders existentes) -->
+  <div style="display:none">
     <tbody id="tb-pessoal"></tbody>
-    <tfoot><tr class="total-row"><td colspan="2">Total</td><td id="tot-pessoal"></td><td colspan="3"></td></tr></tfoot></table>
-  </div>
-  <div class="card">
-    <div class="card-title">Cartoes pessoais <button class="add-btn" onclick="openModal('cartao-pes-novo')">+ Novo</button></div>
-    <table><thead><tr><th style="width:30px"></th><th>Descricao</th><th style="width:110px">Valor</th><th style="width:90px">Vencimento</th><th style="width:70px">Status</th><th style="width:60px"></th></tr></thead>
     <tbody id="tb-cartao-pes"></tbody>
-    <tfoot><tr class="total-row"><td colspan="2">Total</td><td id="tot-cartao-pes"></td><td colspan="3"></td></tr></tfoot></table>
-  </div>
-
-  <!-- MAE dentro de Pessoal -->
-  <div id="sec-mae">
-    <div class="metrics" id="mae-metrics"></div>
-    <div class="grid3">
-      <div class="card">
-        <div class="card-title">❤️ Mãe — Pago pra ela <button class="add-btn" onclick="openModal('mae-pago')">＋ Novo</button></div>
-        <table><thead><tr><th style="width:30px"></th><th>Descrição</th><th style="width:95px">Valor</th><th style="width:30px"></th></tr></thead>
-        <tbody id="tb-mae-pago"></tbody>
-        <tfoot><tr class="total-row"><td colspan="2">Total</td><td id="tot-mae-pago"></td><td></td></tr></tfoot></table>
-      </div>
-      <div class="card">
-        <div class="card-title">Ela me deve <button class="add-btn" onclick="openModal('mae-rec')">＋ Novo</button></div>
-        <table><thead><tr><th style="width:30px"></th><th>Descrição</th><th style="width:95px">Valor</th><th style="width:30px"></th></tr></thead>
-        <tbody id="tb-mae-rec"></tbody>
-        <tfoot><tr class="total-row"><td colspan="2">Total</td><td id="tot-mae-rec"></td><td></td></tr></tfoot></table>
-      </div>
-      <div class="card"><div class="card-title">Saldo com a Mãe</div><div id="mae-saldo"></div></div>
-    </div>
-  </div>
-
-  <!-- LUANA dentro de Pessoal -->
-  <div id="sec-luana">
-    <div class="metrics" id="luana-metrics"></div>
-    <div class="grid3">
-      <div class="card">
-        <div class="card-title">👩 Luana — Pago pra ela <button class="add-btn" onclick="openModal('luana-pago')">＋ Novo</button></div>
-        <table><thead><tr><th style="width:30px"></th><th>Descrição</th><th style="width:95px">Valor</th><th style="width:30px"></th></tr></thead>
-        <tbody id="tb-luana-pago"></tbody>
-        <tfoot><tr class="total-row"><td colspan="2">Total</td><td id="tot-luana-pago"></td><td></td></tr></tfoot></table>
-      </div>
-      <div class="card">
-        <div class="card-title">Ela me deve <button class="add-btn" onclick="openModal('luana-rec')">＋ Novo</button></div>
-        <table><thead><tr><th style="width:30px"></th><th>Descrição</th><th style="width:95px">Valor</th><th style="width:30px"></th></tr></thead>
-        <tbody id="tb-luana-rec"></tbody>
-        <tfoot><tr class="total-row"><td colspan="2">Total</td><td id="tot-luana-rec"></td><td></td></tr></tfoot></table>
-      </div>
-      <div class="card"><div class="card-title">Saldo com a Luana</div><div id="luana-saldo"></div></div>
-    </div>
-  </div>
-
-  <!-- DEYSE dentro de Pessoal -->
-  <div id="sec-deyse">
-    <div class="metrics" id="deyse-metrics"></div>
-    <div class="grid3">
-      <div class="card">
-        <div class="card-title">👨‍👩‍👧 Fam. Deyse — Pago pra eles <button class="add-btn" onclick="openModal('deyse-pago')">＋ Novo</button></div>
-        <table><thead><tr><th style="width:30px"></th><th>Descrição</th><th style="width:95px">Valor</th><th style="width:30px"></th></tr></thead>
-        <tbody id="tb-deyse-pago"></tbody>
-        <tfoot><tr class="total-row"><td colspan="2">Total</td><td id="tot-deyse-pago"></td><td></td></tr></tfoot></table>
-      </div>
-      <div class="card">
-        <div class="card-title">Eles me devem <button class="add-btn" onclick="openModal('deyse-rec')">＋ Novo</button></div>
-        <table><thead><tr><th style="width:30px"></th><th>Descrição</th><th style="width:95px">Valor</th><th style="width:30px"></th></tr></thead>
-        <tbody id="tb-deyse-rec"></tbody>
-        <tfoot><tr class="total-row"><td colspan="2">Total</td><td id="tot-deyse-rec"></td><td></td></tr></tfoot></table>
-      </div>
-      <div class="card"><div class="card-title">Saldo com Fam. Deyse</div><div id="deyse-saldo"></div></div>
-    </div>
+    <tbody id="tb-mae-pago"></tbody><tbody id="tb-mae-rec"></tbody>
+    <tbody id="tb-luana-pago"></tbody><tbody id="tb-luana-rec"></tbody>
+    <tbody id="tb-deyse-pago"></tbody><tbody id="tb-deyse-rec"></tbody>
+    <span id="tot-pessoal"></span><span id="tot-cartao-pes"></span>
+    <span id="tot-mae-pago"></span><span id="tot-mae-rec"></span>
+    <span id="tot-luana-pago"></span><span id="tot-luana-rec"></span>
+    <span id="tot-deyse-pago"></span><span id="tot-deyse-rec"></span>
+    <div id="mae-saldo"></div><div id="luana-saldo"></div><div id="deyse-saldo"></div>
+    <div id="mae-metrics"></div><div id="luana-metrics"></div><div id="deyse-metrics"></div>
+    <div id="sec-mae"></div><div id="sec-luana"></div><div id="sec-deyse"></div>
+    <div id="grupos-container"></div>
   </div>
 </div>
+
+<!-- Modal novo grupo -->
+<div class="modal-overlay" id="m-grupo-novo"><div class="modal"><h3>Novo grupo personalizado</h3>
+  <div class="form-row"><label>Nome do grupo</label><input type="text" id="gn-nome" placeholder="Ex: Empréstimo João, Dívida Maria..."></div>
+  <div class="form-row"><label>Tipo</label>
+    <select id="gn-tipo" style="font-size:13px;padding:7px 10px;border:1px solid #ddd;border-radius:8px;background:#fff;color:#1a1a1a;width:100%">
+      <option value="pagar">A pagar (saída)</option>
+      <option value="receber">A receber (entrada)</option>
+      <option value="ambos">Ambos (pagar e receber)</option>
+    </select>
+  </div>
+  <div class="form-row"><label>Posição</label>
+    <select id="gn-pos" style="font-size:13px;padding:7px 10px;border:1px solid #ddd;border-radius:8px;background:#fff;color:#1a1a1a;width:100%">
+      <option value="fim">No final (padrão)</option>
+      <option value="inicio">No início</option>
+    </select>
+    <div id="gn-pos-especifica" style="margin-top:6px;display:none">
+      <input type="number" id="gn-pos-num" placeholder="Ex: 2 (inserir na posição 2)" min="1" style="font-size:13px;padding:7px 10px;border:1px solid #ddd;border-radius:8px;width:100%">
+    </div>
+  </div>
+  <div class="form-actions"><button class="btn-cancel" onclick="closeModal('grupo-novo')">Cancelar</button><button class="btn-primary" onclick="addGrupo()">Criar</button></div>
+</div></div>
+
+<!-- Modal nova entrada de grupo -->
+<div class="modal-overlay" id="m-grupo-item"><div class="modal"><h3 id="grupo-item-title">Nova entrada</h3>
+  <div class="form-row"><label>Descrição</label><input type="text" id="gi-desc" placeholder="Ex: Parcela 1, Juros..."></div>
+  <div class="form-row"><label>Valor (R$)</label><input type="number" id="gi-val" step="0.01"></div>
+  <div class="form-row"><label>Data</label><input type="date" id="gi-data"></div>
+  <div class="form-actions"><button class="btn-cancel" onclick="closeModal('grupo-item')">Cancelar</button><button class="btn-primary" onclick="addGrupoItem()">Salvar</button></div>
+</div></div>
 
 <!-- seções independentes removidas (agora dentro de Pessoal) -->
 
@@ -481,6 +462,7 @@ let D={
   luana:{pago:[{desc:'Internet',val:25,pago:true},{desc:'Tablet até julho',val:402.80,pago:true},{desc:'Cartão até novembro',val:750,pago:true},{desc:'Prestação Loja até agosto',val:2531,pago:false}],rec:[{desc:'Me deve (saldo)',val:1177.80,pago:false}]},
   deyse:{pago:[],rec:[]},
   cartoesPes:[],
+  grupos:[],
   funcionarios:[
     {nome:'Prezunto',pago:false,salarioBase:1320,adicionais:[{desc:'Periculosidade',val:486.30},{desc:'Cond. Autorizado',val:355},{desc:'Vale Alimentação',val:702},{desc:'Vale Transporte',val:208},{desc:'Ajuda de custo',val:80}],descontos:[]},
     {nome:'Donizete',pago:false,salarioBase:2400,adicionais:[{desc:'Periculosidade',val:486.30},{desc:'Cond. Autorizado',val:355},{desc:'Vale Alimentação',val:702},{desc:'Vale Transporte',val:208},{desc:'Ajuda de custo',val:80},{desc:'Hora extra',val:100},{desc:'Plantão',val:800}],descontos:[{desc:'Geladeira jan/27',val:100},{desc:'Celular ago/26',val:380},{desc:'Adiantamento',val:150},{desc:'Fone JBL',val:30.40}]},
@@ -503,7 +485,7 @@ function dadosVazios(){
   return{
     boletos:[],cartoes:[],emprestimos:[],empresa:[],pessoal:[],links:[],
     mae:{pago:[],rec:[]},luana:{pago:[],rec:[]},deyse:{pago:[],rec:[]},
-    cartoesPes:[],funcionarios:f,
+    cartoesPes:[],grupos:[],gruposEmp:[],blocosPessoal:[],blocosEmpresa:[],funcionarios:f,
     prevRec:0,emConta:0,activeEmp:0,activeHistMes:null,historico:[]
   };
 }
@@ -1137,18 +1119,637 @@ function exportCSV(){
   a.click();
 }
 
+// ── BLOCOS ORDENÁVEIS DA ABA PESSOAL ──────────────────────────
+// blocosPessoal: array de {id, tipo} onde tipo pode ser:
+// 'pessoal','cartoesPes','mae','luana','deyse', ou 'grupo:GRUPOID'
+function initBlocosPessoal(){
+  if(!D.blocosPessoal||!D.blocosPessoal.length){
+    D.blocosPessoal=[
+      {id:'pessoal',tipo:'pessoal'},
+      {id:'cartoesPes',tipo:'cartoesPes'},
+      {id:'mae',tipo:'mae'},
+      {id:'luana',tipo:'luana'},
+      {id:'deyse',tipo:'deyse'},
+    ];
+    // adicionar grupos existentes que não estejam na lista
+    (D.grupos||[]).forEach(g=>{
+      if(!D.blocosPessoal.find(b=>b.id==='grupo:'+g.id)){
+        D.blocosPessoal.push({id:'grupo:'+g.id,tipo:'grupo:'+g.id});
+      }
+    });
+  }
+  // garantir que novos grupos também entrem
+  (D.grupos||[]).forEach(g=>{
+    if(!D.blocosPessoal.find(b=>b.id==='grupo:'+g.id)){
+      D.blocosPessoal.push({id:'grupo:'+g.id,tipo:'grupo:'+g.id});
+    }
+  });
+  // remover blocos de grupos deletados
+  D.blocosPessoal=D.blocosPessoal.filter(b=>{
+    if(!b.tipo.startsWith('grupo:'))return true;
+    const gid=b.tipo.replace('grupo:','');
+    return (D.grupos||[]).some(g=>g.id===gid);
+  });
+}
+
+function moverBloco(id,dir){
+  const idx=D.blocosPessoal.findIndex(b=>b.id===id);
+  if(idx<0)return;
+  if(dir==='up'&&idx===0)return;
+  if(dir==='down'&&idx===D.blocosPessoal.length-1)return;
+  const novo=dir==='up'?idx-1:idx+1;
+  const tmp=D.blocosPessoal[novo];
+  D.blocosPessoal[novo]=D.blocosPessoal[idx];
+  D.blocosPessoal[idx]=tmp;
+  save();renderPessoalBlocks();
+}
+
+function excluirBlocoPessoal(id,tipo){
+  if(tipo.startsWith('grupo:')){
+    const gid=tipo.replace('grupo:','');
+    if(!confirm('Remover este grupo e todos os seus itens?'))return;
+    D.grupos=(D.grupos||[]).filter(g=>g.id!==gid);
+  } else {
+    const nomes={pessoal:'Contas pessoais',cartoesPes:'Cartões pessoais',mae:'Mãe',luana:'Luana',deyse:'Fam. Deyse'};
+    if(!confirm('Ocultar o bloco "'+nomes[tipo]+'"? Ele ficará escondido mas os dados serão mantidos.'))return;
+  }
+  D.blocosPessoal=D.blocosPessoal.filter(b=>b.id!==id);
+  save();renderPessoalBlocks();
+}
+
+function renderBlocoMoveControls(id,tipo,idx,total){
+  return`<div style="display:flex;gap:4px;align-items:center">
+    <button class="add-btn" onclick="moverBloco('${id}','up')" title="Mover para cima" ${idx===0?'disabled style="opacity:.3"':''}>▲</button>
+    <button class="add-btn" onclick="moverBloco('${id}','down')" title="Mover para baixo" ${idx===total-1?'disabled style="opacity:.3"':''}>▼</button>
+  </div>`;
+}
+
+function renderPessoalBlocks(){
+  initBlocosPessoal();
+  const container=gi('pessoal-blocks-container');
+  if(!container)return;
+  const total=D.blocosPessoal.length;
+  let html='';
+
+  D.blocosPessoal.forEach((bloco,idx)=>{
+    const {id,tipo}=bloco;
+    const moveCtrl=renderBlocoMoveControls(id,tipo,idx,total);
+    const delBtn=`<button class="add-btn btn-danger" onclick="excluirBlocoPessoal('${id}','${tipo}')" title="Remover bloco">🗑️</button>`;
+
+    if(tipo==='pessoal'){
+      html+=`<div class="card" style="margin-bottom:1rem">
+        <div class="card-title"><span>🏠 Contas pessoais</span>
+          <div style="display:flex;gap:6px;align-items:center">${moveCtrl}<button class="add-btn" onclick="openModal('pessoal-novo')">＋ Nova</button>${delBtn}</div>
+        </div>
+        <table><thead><tr><th style="width:30px"></th><th>Descrição</th><th style="width:110px">Valor</th><th style="width:90px">Vencimento</th><th style="width:70px">Status</th><th style="width:60px"></th></tr></thead>
+        <tbody id="tb-pessoal-b"></tbody>
+        <tfoot><tr class="total-row"><td colspan="2">Total pendente</td><td id="tot-pessoal-b"></td><td colspan="3"></td></tr></tfoot></table>
+      </div>`;
+    } else if(tipo==='cartoesPes'){
+      html+=`<div class="card" style="margin-bottom:1rem">
+        <div class="card-title"><span>💳 Cartões pessoais</span>
+          <div style="display:flex;gap:6px;align-items:center">${moveCtrl}<button class="add-btn" onclick="openModal('cartao-pes-novo')">＋ Novo</button>${delBtn}</div>
+        </div>
+        <table><thead><tr><th style="width:30px"></th><th>Descrição</th><th style="width:110px">Valor</th><th style="width:90px">Vencimento</th><th style="width:70px">Status</th><th style="width:60px"></th></tr></thead>
+        <tbody id="tb-cartao-pes-b"></tbody>
+        <tfoot><tr class="total-row"><td colspan="2">Total pendente</td><td id="tot-cartao-pes-b"></td><td colspan="3"></td></tr></tfoot></table>
+      </div>`;
+    } else if(tipo==='mae'){
+      const g=totPG('mae'),r=totPR('mae'),s=r-g;
+      html+=`<div class="card" style="margin-bottom:1rem">
+        <div class="card-title"><span>❤️ Mãe</span>
+          <div style="display:flex;gap:6px;align-items:center">${moveCtrl}${delBtn}</div>
+        </div>
+        <div class="grid3">
+          <div><div style="font-size:12px;color:#888;margin-bottom:6px">Pago pra ela <button class="add-btn" onclick="openModal('mae-pago')" style="margin-left:4px">＋</button></div>
+            <table><thead><tr><th style="width:28px"></th><th>Descrição</th><th>Valor</th><th style="width:28px"></th></tr></thead>
+            <tbody id="tb-mae-pago-b"></tbody>
+            <tfoot><tr class="total-row"><td colspan="2">Total</td><td id="tot-mae-pago-b"></td><td></td></tr></tfoot></table>
+          </div>
+          <div><div style="font-size:12px;color:#888;margin-bottom:6px">Ela me deve <button class="add-btn" onclick="openModal('mae-rec')" style="margin-left:4px">＋</button></div>
+            <table><thead><tr><th style="width:28px"></th><th>Descrição</th><th>Valor</th><th style="width:28px"></th></tr></thead>
+            <tbody id="tb-mae-rec-b"></tbody>
+            <tfoot><tr class="total-row"><td colspan="2">Total</td><td id="tot-mae-rec-b"></td><td></td></tr></tfoot></table>
+          </div>
+          <div><div style="font-size:12px;color:#888;margin-bottom:6px">Saldo</div>
+            <div class="sal-row"><span>Você pagou</span><span class="red">${brl(g)}</span></div>
+            <div class="sal-row"><span>Ela deve</span><span class="green">${brl(r)}</span></div>
+            <div class="saldo-box ${s>=0?'positivo':'negativo'}" style="margin-top:8px"><span style="font-size:12px">${s>=0?'Ela te deve':'Você deve'}</span><span style="font-weight:600">${brl(Math.abs(s))}</span></div>
+          </div>
+        </div>
+      </div>`;
+    } else if(tipo==='luana'){
+      const g=totPG('luana'),r=totPR('luana'),s=r-g;
+      html+=`<div class="card" style="margin-bottom:1rem">
+        <div class="card-title"><span>👩 Luana</span>
+          <div style="display:flex;gap:6px;align-items:center">${moveCtrl}${delBtn}</div>
+        </div>
+        <div class="grid3">
+          <div><div style="font-size:12px;color:#888;margin-bottom:6px">Pago pra ela <button class="add-btn" onclick="openModal('luana-pago')" style="margin-left:4px">＋</button></div>
+            <table><thead><tr><th style="width:28px"></th><th>Descrição</th><th>Valor</th><th style="width:28px"></th></tr></thead>
+            <tbody id="tb-luana-pago-b"></tbody>
+            <tfoot><tr class="total-row"><td colspan="2">Total</td><td id="tot-luana-pago-b"></td><td></td></tr></tfoot></table>
+          </div>
+          <div><div style="font-size:12px;color:#888;margin-bottom:6px">Ela me deve <button class="add-btn" onclick="openModal('luana-rec')" style="margin-left:4px">＋</button></div>
+            <table><thead><tr><th style="width:28px"></th><th>Descrição</th><th>Valor</th><th style="width:28px"></th></tr></thead>
+            <tbody id="tb-luana-rec-b"></tbody>
+            <tfoot><tr class="total-row"><td colspan="2">Total</td><td id="tot-luana-rec-b"></td><td></td></tr></tfoot></table>
+          </div>
+          <div><div style="font-size:12px;color:#888;margin-bottom:6px">Saldo</div>
+            <div class="sal-row"><span>Você pagou</span><span class="red">${brl(g)}</span></div>
+            <div class="sal-row"><span>Ela deve</span><span class="green">${brl(r)}</span></div>
+            <div class="saldo-box ${s>=0?'positivo':'negativo'}" style="margin-top:8px"><span style="font-size:12px">${s>=0?'Ela te deve':'Você deve'}</span><span style="font-weight:600">${brl(Math.abs(s))}</span></div>
+          </div>
+        </div>
+      </div>`;
+    } else if(tipo==='deyse'){
+      const g=totPG('deyse'),r=totPR('deyse'),s=r-g;
+      html+=`<div class="card" style="margin-bottom:1rem">
+        <div class="card-title"><span>👨‍👩‍👧 Fam. Deyse</span>
+          <div style="display:flex;gap:6px;align-items:center">${moveCtrl}${delBtn}</div>
+        </div>
+        <div class="grid3">
+          <div><div style="font-size:12px;color:#888;margin-bottom:6px">Pago pra eles <button class="add-btn" onclick="openModal('deyse-pago')" style="margin-left:4px">＋</button></div>
+            <table><thead><tr><th style="width:28px"></th><th>Descrição</th><th>Valor</th><th style="width:28px"></th></tr></thead>
+            <tbody id="tb-deyse-pago-b"></tbody>
+            <tfoot><tr class="total-row"><td colspan="2">Total</td><td id="tot-deyse-pago-b"></td><td></td></tr></tfoot></table>
+          </div>
+          <div><div style="font-size:12px;color:#888;margin-bottom:6px">Eles me devem <button class="add-btn" onclick="openModal('deyse-rec')" style="margin-left:4px">＋</button></div>
+            <table><thead><tr><th style="width:28px"></th><th>Descrição</th><th>Valor</th><th style="width:28px"></th></tr></thead>
+            <tbody id="tb-deyse-rec-b"></tbody>
+            <tfoot><tr class="total-row"><td colspan="2">Total</td><td id="tot-deyse-rec-b"></td><td></td></tr></tfoot></table>
+          </div>
+          <div><div style="font-size:12px;color:#888;margin-bottom:6px">Saldo</div>
+            <div class="sal-row"><span>Você pagou</span><span class="red">${brl(g)}</span></div>
+            <div class="sal-row"><span>Eles devem</span><span class="green">${brl(r)}</span></div>
+            <div class="saldo-box ${s>=0?'positivo':'negativo'}" style="margin-top:8px"><span style="font-size:12px">${s>=0?'Eles te devem':'Você deve'}</span><span style="font-weight:600">${brl(Math.abs(s))}</span></div>
+          </div>
+        </div>
+      </div>`;
+    } else if(tipo.startsWith('grupo:')){
+      const gid=tipo.replace('grupo:','');
+      const g=(D.grupos||[]).find(x=>x.id===gid);
+      if(!g)return;
+      const totPagar=g.itens.filter(x=>x.tipo==='pagar'&&!x.pago).reduce((s,x)=>s+x.val,0);
+      const totReceber=g.itens.filter(x=>x.tipo==='receber'&&!x.pago).reduce((s,x)=>s+x.val,0);
+      const saldo=totReceber-totPagar;
+      const tipoIcon=g.tipo==='receber'?'💚':g.tipo==='pagar'?'🔴':'🔄';
+      const addBtns=g.tipo==='ambos'
+        ?`<button class="add-btn" onclick="openGrupoItem('${g.id}','pagar')" style="color:#c0392b">＋ Saída</button>
+           <button class="add-btn" onclick="openGrupoItem('${g.id}','receber')" style="color:#2e7d45">＋ Entrada</button>`
+        :`<button class="add-btn" onclick="openGrupoItem('${g.id}','${g.tipo==='receber'?'receber':'pagar'}')">＋ Novo</button>`;
+      const gi_idx=(D.grupos||[]).findIndex(x=>x.id===gid);
+      const rows=g.itens.map((item,j)=>`<tr>
+        <td><input type="checkbox" ${item.pago?'checked':''} onchange="D.grupos[${gi_idx}].itens[${j}].pago=this.checked;save();renderPessoalBlocks()"></td>
+        <td title="${item.desc}">${item.desc}</td>
+        <td style="text-align:right;color:${item.tipo==='receber'?'#2e7d45':'#c0392b'}">${item.tipo==='receber'?'+':'-'}${brl(item.val)}</td>
+        <td style="text-align:center;font-size:12px;color:#888">${item.data?item.data.split('-').reverse().slice(0,2).join('/'):'-'}</td>
+        <td><span class="badge ${item.pago?'badge-paid':'badge-pending'}">${item.pago?'Baixado':'Pend.'}</span></td>
+        <td><button class="action-btn" onclick="D.grupos[${gi_idx}].itens.splice(${j},1);save();renderPessoalBlocks()" title="Excluir">🗑️</button></td>
+      </tr>`).join('');
+      html+=`<div class="card" style="margin-bottom:1rem">
+        <div class="card-title"><span>${tipoIcon} ${g.nome}</span>
+          <div style="display:flex;gap:6px;align-items:center">${moveCtrl}${addBtns}${delBtn}</div>
+        </div>
+        ${g.itens.length?`<table><thead><tr><th style="width:30px"></th><th>Descrição</th><th style="width:100px">Valor</th><th style="width:80px">Data</th><th style="width:70px">Status</th><th style="width:30px"></th></tr></thead>
+        <tbody>${rows}</tbody>
+        <tfoot><tr class="total-row"><td colspan="2">Saldo pendente</td><td style="text-align:right;color:${saldo>=0?'#2e7d45':'#c0392b'}">${saldo>=0?'+':''}${brl(saldo)}</td><td colspan="3"></td></tr></tfoot></table>`
+        :`<div style="text-align:center;padding:1rem;color:#bbb;font-size:13px">Nenhum item ainda.</div>`}
+      </div>`;
+    }
+  });
+
+  // botão para adicionar novo grupo no final
+  html+=`<div style="display:flex;justify-content:flex-end;margin-top:.5rem">
+    <button class="add-btn" onclick="openModal('grupo-novo')">＋ Novo grupo personalizado</button>
+  </div>`;
+
+  container.innerHTML=html;
+
+  // preencher tabelas de pessoal e cartoesPes nos blocos
+  renderItemTableInto('pessoal','tb-pessoal-b','tot-pessoal-b');
+  renderItemTableInto('cartoesPes','tb-cartao-pes-b','tot-cartao-pes-b');
+  renderPessoaTableInto('mae','pago','tb-mae-pago-b','tot-mae-pago-b');
+  renderPessoaTableInto('mae','rec','tb-mae-rec-b','tot-mae-rec-b');
+  renderPessoaTableInto('luana','pago','tb-luana-pago-b','tot-luana-pago-b');
+  renderPessoaTableInto('luana','rec','tb-luana-rec-b','tot-luana-rec-b');
+  renderPessoaTableInto('deyse','pago','tb-deyse-pago-b','tot-deyse-pago-b');
+  renderPessoaTableInto('deyse','rec','tb-deyse-rec-b','tot-deyse-rec-b');
+}
+
+function renderItemTableInto(key,tbodyId,totId){
+  const tbody=document.getElementById(tbodyId);
+  const totEl=document.getElementById(totId);
+  if(!tbody)return;
+  const em={boletos:['be-desc','be-val','be-venc','boleto-edit'],empresa:['ee-desc','ee-val','ee-venc','empresa-edit'],pessoal:['pe-desc','pe-val','pe-venc','pessoal-edit'],cartoesPes:['cpe-desc','cpe-val','cpe-venc','cartao-pes-edit']};
+  const[dId,vId,vcId,mKey]=em[key];
+  let tot=0;
+  tbody.innerHTML=D[key].map((r,i)=>{
+    tot+=r.val;
+    return`<tr>
+      <td><input type="checkbox" ${r.pago?'checked':''} onchange="D['${key}'][${i}].pago=this.checked;save();renderPessoalBlocks();renderDash()"></td>
+      <td title="${r.desc}">${r.desc}</td>
+      <td style="text-align:right">${brl(r.val)}</td>
+      <td style="text-align:center">${vencBadge(r.venc||'',r.pago)}</td>
+      <td><span class="badge ${r.pago?'badge-paid':'badge-pending'}">${r.pago?'Pago':'Pend.'}</span></td>
+      <td><div class="row-actions">
+        <button class="action-btn" onclick="openEdit('${key}',${i},'${dId}','${vId}','${vcId}','${mKey}')" title="Editar">✏️</button>
+        <button class="action-btn" onclick="D['${key}'].splice(${i},1);save();renderPessoalBlocks();renderDash()" title="Excluir">🗑️</button>
+      </div></td>
+    </tr>`;
+  }).join('');
+  if(totEl)totEl.textContent=brl(tot);
+}
+
+function renderPessoaTableInto(key,sub,tbodyId,totId){
+  const tbody=document.getElementById(tbodyId);
+  const totEl=document.getElementById(totId);
+  if(!tbody)return;
+  let tot=0;
+  tbody.innerHTML=D[key][sub].map((r,i)=>{tot+=r.val;return`<tr>
+    <td><input type="checkbox" ${r.pago?'checked':''} onchange="D['${key}']['${sub}'][${i}].pago=this.checked;save();renderPessoalBlocks()"></td>
+    <td>${r.desc}</td><td style="text-align:right">${brl(r.val)}</td>
+    <td><button class="action-btn" onclick="D['${key}']['${sub}'].splice(${i},1);save();renderPessoalBlocks()" title="Excluir">🗑️</button></td>
+  </tr>`}).join('');
+  if(totEl)totEl.textContent=brl(tot);
+}
+
+// ── GRUPOS PERSONALIZADOS ─────────────────────────────────────
+let grupoItemCtx={grupoId:null,tipo:null};
+
+function addGrupo(){
+  const nome=gv('gn-nome'),tipo=gi('gn-tipo').value;
+  if(!nome)return;
+  const id='g'+Date.now();
+  if(!D.grupos)D.grupos=[];
+  if(!D.blocosPessoal)initBlocosPessoal();
+  const pos=gi('gn-pos').value;
+  const novoGrupo={id,nome,tipo,itens:[]};
+  const novoBloco={id:'grupo:'+id,tipo:'grupo:'+id};
+  if(pos==='inicio'){
+    D.grupos.unshift(novoGrupo);
+    D.blocosPessoal.unshift(novoBloco);
+  } else {
+    D.grupos.push(novoGrupo);
+    D.blocosPessoal.push(novoBloco);
+  }
+  gi('gn-nome').value='';
+  save();closeModal('grupo-novo');renderPessoalBlocks();
+}
+
+function moverGrupo(id,dir){
+  const idx=D.grupos.findIndex(g=>g.id===id);
+  if(idx<0)return;
+  if(dir==='up'&&idx===0)return;
+  if(dir==='down'&&idx===D.grupos.length-1)return;
+  const novo=dir==='up'?idx-1:idx+1;
+  const tmp=D.grupos[novo];
+  D.grupos[novo]=D.grupos[idx];
+  D.grupos[idx]=tmp;
+  save();renderPessoalBlocks();
+}
+
+function delGrupo(id){
+  if(!confirm('Remover este grupo e todos os itens?'))return;
+  D.grupos=D.grupos.filter(g=>g.id!==id);
+  save();renderPessoalBlocks();
+}
+
+function openGrupoItem(grupoId,tipo){
+  grupoItemCtx={grupoId,tipo};
+  const label=tipo==='receber'?'Nova entrada a receber':'Nova saída a pagar';
+  gi('grupo-item-title').textContent=label;
+  gi('gi-desc').value='';gi('gi-val').value='';gi('gi-data').value='';
+  openModal('grupo-item');
+}
+
+function addGrupoItem(){
+  const desc=gv('gi-desc'),val=gn('gi-val'),data=gv('gi-data');
+  if(!desc||!val)return;
+  const g=D.grupos.find(x=>x.id===grupoItemCtx.grupoId);
+  if(!g)return;
+  g.itens.push({desc,val,data,pago:false,tipo:grupoItemCtx.tipo});
+  save();closeModal('grupo-item');renderPessoalBlocks();
+}
+
+function renderGrupos(){
+  if(!D.grupos)D.grupos=[];
+  const container=gi('grupos-container');
+  if(!container)return;
+  if(!D.grupos.length){
+    container.innerHTML=`<div style="text-align:center;padding:1.5rem;color:#bbb;font-size:13px;border:1px dashed #ddd;border-radius:12px">Nenhum grupo criado ainda. Clique em "＋ Novo grupo" para começar.</div>`;
+    return;
+  }
+  container.innerHTML=D.grupos.map(g=>{
+    const pagar=g.itens.filter(x=>x.tipo==='pagar'||g.tipo==='pagar');
+    const receber=g.itens.filter(x=>x.tipo==='receber'||g.tipo==='receber');
+    const totPagar=g.itens.filter(x=>(x.tipo==='pagar')&&!x.pago).reduce((s,x)=>s+x.val,0);
+    const totReceber=g.itens.filter(x=>(x.tipo==='receber')&&!x.pago).reduce((s,x)=>s+x.val,0);
+    const saldo=totReceber-totPagar;
+
+    const tipoIcon=g.tipo==='receber'?'💚':g.tipo==='pagar'?'🔴':'🔄';
+
+    const rows=g.itens.map((item,j)=>{
+      const gi_idx=D.grupos.findIndex(x=>x.id===g.id);
+      return`<tr>
+        <td><input type="checkbox" ${item.pago?'checked':''} onchange="D.grupos[${gi_idx}].itens[${j}].pago=this.checked;save();renderPessoalBlocks()"></td>
+        <td title="${item.desc}">${item.desc}</td>
+        <td style="text-align:right;color:${item.tipo==='receber'?'#2e7d45':'#c0392b'}">${item.tipo==='receber'?'+':'-'}${brl(item.val)}</td>
+        <td style="text-align:center;font-size:12px;color:#888">${item.data?item.data.split('-').reverse().slice(0,2).join('/'):'-'}</td>
+        <td><span class="badge ${item.pago?'badge-paid':'badge-pending'}">${item.pago?'Baixado':'Pend.'}</span></td>
+        <td><button class="action-btn" onclick="D.grupos[${gi_idx}].itens.splice(${j},1);save();renderPessoalBlocks()" title="Excluir">🗑️</button></td>
+      </tr>`;
+    }).join('');
+
+    const addBtns=g.tipo==='ambos'
+      ?`<button class="add-btn" onclick="openGrupoItem('${g.id}','pagar')" style="color:#c0392b">＋ Saída</button>
+         <button class="add-btn" onclick="openGrupoItem('${g.id}','receber')" style="color:#2e7d45">＋ Entrada</button>`
+      :`<button class="add-btn" onclick="openGrupoItem('${g.id}','${g.tipo==='receber'?'receber':'pagar'}')">＋ Novo</button>`;
+
+    return`<div class="card" style="margin-bottom:1rem">
+      <div class="card-title">
+        <span>${tipoIcon} ${g.nome}</span>
+        <div style="display:flex;gap:6px;align-items:center">
+          <button class="add-btn" onclick="moverGrupo('${g.id}','up')" title="Mover para cima" ${D.grupos.indexOf(g)===0?'disabled style="opacity:.3"':''}>▲</button>
+          <button class="add-btn" onclick="moverGrupo('${g.id}','down')" title="Mover para baixo" ${D.grupos.indexOf(g)===D.grupos.length-1?'disabled style="opacity:.3"':''}>▼</button>
+          ${addBtns}
+          <button class="add-btn btn-danger" onclick="delGrupo('${g.id}')">🗑️</button>
+        </div>
+      </div>
+      ${g.itens.length?`
+      <table><thead><tr><th style="width:30px"></th><th>Descrição</th><th style="width:100px">Valor</th><th style="width:80px">Data</th><th style="width:70px">Status</th><th style="width:30px"></th></tr></thead>
+      <tbody>${rows}</tbody>
+      <tfoot><tr class="total-row">
+        <td colspan="2">Saldo pendente</td>
+        <td style="text-align:right;color:${saldo>=0?'#2e7d45':'#c0392b'}">${saldo>=0?'+':''}${brl(saldo)}</td>
+        <td colspan="3"></td>
+      </tr></tfoot></table>`
+      :`<div style="text-align:center;padding:1rem;color:#bbb;font-size:13px">Nenhum item. Clique em "＋ Novo" para adicionar.</div>`}
+    </div>`;
+  }).join('');
+}
+
+// ── BLOCOS ORDENÁVEIS DA ABA EMPRESA ─────────────────────────
+function initBlocosEmpresa(){
+  if(!D.blocosEmpresa||!D.blocosEmpresa.length){
+    D.blocosEmpresa=[
+      {id:'boletos',tipo:'boletos'},
+      {id:'links',tipo:'links'},
+      {id:'empresa',tipo:'empresa'},
+      {id:'cartoes',tipo:'cartoes'},
+      {id:'emprestimos',tipo:'emprestimos'},
+    ];
+  }
+  // adicionar novos gruposEmp que não estejam na lista
+  (D.gruposEmp||[]).forEach(g=>{
+    if(!D.blocosEmpresa.find(b=>b.id==='grpemp:'+g.id)){
+      D.blocosEmpresa.push({id:'grpemp:'+g.id,tipo:'grpemp:'+g.id});
+    }
+  });
+  // remover blocos de grupos deletados
+  D.blocosEmpresa=D.blocosEmpresa.filter(b=>{
+    if(!b.tipo.startsWith('grpemp:'))return true;
+    const gid=b.tipo.replace('grpemp:','');
+    return (D.gruposEmp||[]).some(g=>g.id===gid);
+  });
+}
+
+function moverBlocoEmp(id,dir){
+  const idx=D.blocosEmpresa.findIndex(b=>b.id===id);
+  if(idx<0)return;
+  if(dir==='up'&&idx===0)return;
+  if(dir==='down'&&idx===D.blocosEmpresa.length-1)return;
+  const novo=dir==='up'?idx-1:idx+1;
+  const tmp=D.blocosEmpresa[novo];
+  D.blocosEmpresa[novo]=D.blocosEmpresa[idx];
+  D.blocosEmpresa[idx]=tmp;
+  save();renderEmpresaBlocks();
+}
+
+function excluirBlocoEmpresa(id,tipo){
+  if(tipo.startsWith('grpemp:')){
+    const gid=tipo.replace('grpemp:','');
+    if(!confirm('Remover este grupo e todos os seus itens?'))return;
+    D.gruposEmp=(D.gruposEmp||[]).filter(g=>g.id!==gid);
+  } else {
+    const nomes={boletos:'Boletos',links:'Links',empresa:'Outras contas',cartoes:'Cartões',emprestimos:'Empréstimos'};
+    if(!confirm('Ocultar "'+nomes[tipo]+'"? Os dados serão mantidos.'))return;
+  }
+  D.blocosEmpresa=D.blocosEmpresa.filter(b=>b.id!==id);
+  save();renderEmpresaBlocks();
+}
+
+let grupoEmpItemCtx={grupoId:null,tipo:null};
+
+function addGrupoEmp(){
+  const nome=gv('gen-nome'),tipo=gi('gen-tipo').value;
+  if(!nome)return;
+  const id='ge'+Date.now();
+  if(!D.gruposEmp)D.gruposEmp=[];
+  if(!D.blocosEmpresa||!D.blocosEmpresa.length)initBlocosEmpresa();
+  const novoGrupo={id,nome,tipo,itens:[]};
+  const novoBloco={id:'grpemp:'+id,tipo:'grpemp:'+id};
+  const pos=gi('gen-pos').value;
+  if(pos==='inicio'){
+    D.gruposEmp.unshift(novoGrupo);
+    D.blocosEmpresa.unshift(novoBloco);
+  } else {
+    D.gruposEmp.push(novoGrupo);
+    D.blocosEmpresa.push(novoBloco);
+  }
+  gi('gen-nome').value='';
+  save();closeModal('grupo-emp-novo');renderEmpresaBlocks();
+}
+
+function openGrupoEmpItem(grupoId,tipo){
+  grupoEmpItemCtx={grupoId,tipo};
+  gi('grupo-emp-item-title').textContent=tipo==='receber'?'Nova entrada a receber':'Nova saída a pagar';
+  gi('gei-desc').value='';gi('gei-val').value='';gi('gei-data').value='';
+  openModal('grupo-emp-item');
+}
+
+function addGrupoEmpItem(){
+  const desc=gv('gei-desc'),val=gn('gei-val'),data=gv('gei-data');
+  if(!desc||!val)return;
+  const g=(D.gruposEmp||[]).find(x=>x.id===grupoEmpItemCtx.grupoId);
+  if(!g)return;
+  g.itens.push({desc,val,data,pago:false,tipo:grupoEmpItemCtx.tipo});
+  save();closeModal('grupo-emp-item');renderEmpresaBlocks();
+}
+
+function renderEmpMoveControls(id,idx,total){
+  return`<button class="add-btn" onclick="moverBlocoEmp('${id}','up')" ${idx===0?'disabled style="opacity:.3"':''}>▲</button>
+         <button class="add-btn" onclick="moverBlocoEmp('${id}','down')" ${idx===total-1?'disabled style="opacity:.3"':''}>▼</button>`;
+}
+
+function renderItemTableEmp(key,tbodyId,totId,editIds){
+  const tbody=document.getElementById(tbodyId);
+  const totEl=document.getElementById(totId);
+  if(!tbody)return;
+  const[dId,vId,vcId,mKey]=editIds;
+  let tot=0;
+  tbody.innerHTML=(D[key]||[]).map((r,i)=>{
+    if(!r.pago)tot+=r.val;
+    return`<tr>
+      <td><input type="checkbox" ${r.pago?'checked':''} onchange="D['${key}'][${i}].pago=this.checked;save();renderEmpresaBlocks();renderDash()"></td>
+      <td title="${r.desc||r.nome||''}">${r.desc||r.nome||''}</td>
+      <td style="text-align:right">${brl(r.val||r.total||0)}</td>
+      <td style="text-align:center">${vencBadge(r.venc||'',r.pago)}</td>
+      <td><span class="badge ${r.pago?'badge-paid':'badge-pending'}">${r.pago?'Pago':'Pend.'}</span></td>
+      <td><div class="row-actions">
+        <button class="action-btn" onclick="openEdit('${key}',${i},'${dId}','${vId}','${vcId}','${mKey}')" title="Editar">✏️</button>
+        <button class="action-btn" onclick="D['${key}'].splice(${i},1);save();renderEmpresaBlocks();renderDash()" title="Excluir">🗑️</button>
+      </div></td>
+    </tr>`;
+  }).join('');
+  if(totEl)totEl.textContent=brl(tot);
+}
+
+function renderLinkTableEmp(tbodyId,totId){
+  const tbody=document.getElementById(tbodyId);
+  const totEl=document.getElementById(totId);
+  if(!tbody)return;
+  let tot=0;
+  tbody.innerHTML=(D.links||[]).map((l,i)=>{
+    if(!l.pago)tot+=l.total;
+    return`<tr>
+      <td><input type="checkbox" ${l.pago?'checked':''} onchange="D.links[${i}].pago=this.checked;save();renderEmpresaBlocks();renderDash()"></td>
+      <td>${l.desc}</td>
+      <td style="text-align:right">${brl(l.total)}</td>
+      <td style="text-align:center">${vencBadge(l.venc||'',l.pago)}</td>
+      <td><button class="action-btn" onclick="D.links.splice(${i},1);save();renderEmpresaBlocks()" title="Excluir">🗑️</button></td>
+    </tr>`;
+  }).join('');
+  if(totEl)totEl.textContent=brl(tot);
+}
+
+function renderCartaoTableEmp(key,tbodyId,totId,isCartao){
+  const tbody=document.getElementById(tbodyId);
+  const totEl=document.getElementById(totId);
+  if(!tbody)return;
+  let tot=0;
+  tbody.innerHTML=(D[key]||[]).map((r,i)=>{
+    if(!r.pago)tot+=r.total;
+    return`<tr>
+      <td><input type="checkbox" ${r.pago?'checked':''} onchange="D['${key}'][${i}].pago=this.checked;save();renderEmpresaBlocks();renderDash()"></td>
+      <td>${r.nome||r.desc}</td>
+      <td style="text-align:right">${brl(r.total)}</td>
+      <td style="text-align:center">${vencBadge(r.venc||'',r.pago)}</td>
+      <td><button class="action-btn" onclick="D['${key}'].splice(${i},1);save();renderEmpresaBlocks()" title="Excluir">🗑️</button></td>
+    </tr>`;
+  }).join('');
+  if(totEl)totEl.textContent=brl(tot);
+}
+
+function renderEmpresaBlocks(){
+  initBlocosEmpresa();
+  const container=gi('empresa-blocks-container');
+  if(!container)return;
+  const total=D.blocosEmpresa.length;
+  let html='';
+
+  D.blocosEmpresa.forEach((bloco,idx)=>{
+    const{id,tipo}=bloco;
+    const mv=renderEmpMoveControls(id,idx,total);
+    const del=`<button class="add-btn btn-danger" onclick="excluirBlocoEmpresa('${id}','${tipo}')" title="Remover">🗑️</button>`;
+
+    if(tipo==='boletos'){
+      html+=`<div class="card" style="margin-bottom:1rem">
+        <div class="card-title"><span>📄 Boletos</span>
+          <div style="display:flex;gap:6px">${mv}<button class="add-btn" onclick="openModal('boleto-novo')">＋ Novo</button>${del}</div>
+        </div>
+        <table><thead><tr><th style="width:30px"></th><th>Descrição</th><th style="width:110px">Valor</th><th style="width:90px">Vencimento</th><th style="width:70px">Status</th><th style="width:60px"></th></tr></thead>
+        <tbody id="tb-boletos-e"></tbody>
+        <tfoot><tr class="total-row"><td colspan="2">Total pendente</td><td id="tot-boletos-e"></td><td colspan="3"></td></tr></tfoot></table>
+      </div>`;
+    } else if(tipo==='links'){
+      html+=`<div class="card" style="margin-bottom:1rem">
+        <div class="card-title"><span>🌐 Links internet</span>
+          <div style="display:flex;gap:6px">${mv}<button class="add-btn" onclick="openModal('link')">＋ Novo</button>${del}</div>
+        </div>
+        <table><thead><tr><th style="width:30px"></th><th>Descrição</th><th style="width:100px">Total</th><th style="width:90px">Vencimento</th><th style="width:30px"></th></tr></thead>
+        <tbody id="tb-links-e"></tbody>
+        <tfoot><tr class="total-row"><td colspan="2">Pendente</td><td id="tot-links-e"></td><td colspan="2"></td></tr></tfoot></table>
+      </div>`;
+    } else if(tipo==='empresa'){
+      html+=`<div class="card" style="margin-bottom:1rem">
+        <div class="card-title"><span>🏪 Outras contas empresa</span>
+          <div style="display:flex;gap:6px">${mv}<button class="add-btn" onclick="openModal('empresa-novo')">＋ Nova</button>${del}</div>
+        </div>
+        <table><thead><tr><th style="width:30px"></th><th>Descrição</th><th style="width:110px">Valor</th><th style="width:90px">Vencimento</th><th style="width:70px">Status</th><th style="width:60px"></th></tr></thead>
+        <tbody id="tb-empresa-e"></tbody>
+        <tfoot><tr class="total-row"><td colspan="2">Total pendente</td><td id="tot-empresa-e"></td><td colspan="3"></td></tr></tfoot></table>
+      </div>`;
+    } else if(tipo==='cartoes'){
+      html+=`<div class="card" style="margin-bottom:1rem">
+        <div class="card-title"><span>💳 Cartões não pessoais</span>
+          <div style="display:flex;gap:6px">${mv}<button class="add-btn" onclick="openModal('cartao')">＋ Novo</button>${del}</div>
+        </div>
+        <table><thead><tr><th style="width:30px"></th><th>Cartão</th><th style="width:100px">Total</th><th style="width:90px">Vencimento</th><th style="width:30px"></th></tr></thead>
+        <tbody id="tb-cartoes-e"></tbody>
+        <tfoot><tr class="total-row"><td colspan="2">Pendente</td><td id="tot-cartoes-e"></td><td colspan="2"></td></tr></tfoot></table>
+      </div>`;
+    } else if(tipo==='emprestimos'){
+      html+=`<div class="card" style="margin-bottom:1rem">
+        <div class="card-title"><span>💰 Empréstimos</span>
+          <div style="display:flex;gap:6px">${mv}<button class="add-btn" onclick="openModal('emp')">＋ Novo</button>${del}</div>
+        </div>
+        <table><thead><tr><th style="width:30px"></th><th>Descrição</th><th style="width:100px">Total</th><th style="width:90px">Vencimento</th><th style="width:30px"></th></tr></thead>
+        <tbody id="tb-emp-e"></tbody>
+        <tfoot><tr class="total-row"><td colspan="2">Pendente</td><td id="tot-emp-e"></td><td colspan="2"></td></tr></tfoot></table>
+      </div>`;
+    } else if(tipo.startsWith('grpemp:')){
+      const gid=tipo.replace('grpemp:','');
+      const g=(D.gruposEmp||[]).find(x=>x.id===gid);
+      if(!g)return;
+      const gi_idx=(D.gruposEmp||[]).findIndex(x=>x.id===gid);
+      const totPagar=g.itens.filter(x=>x.tipo==='pagar'&&!x.pago).reduce((s,x)=>s+x.val,0);
+      const totReceber=g.itens.filter(x=>x.tipo==='receber'&&!x.pago).reduce((s,x)=>s+x.val,0);
+      const saldo=totReceber-totPagar;
+      const tipoIcon=g.tipo==='receber'?'💚':g.tipo==='pagar'?'🔴':'🔄';
+      const addBtns=g.tipo==='ambos'
+        ?`<button class="add-btn" onclick="openGrupoEmpItem('${g.id}','pagar')" style="color:#c0392b">＋ Saída</button>
+           <button class="add-btn" onclick="openGrupoEmpItem('${g.id}','receber')" style="color:#2e7d45">＋ Entrada</button>`
+        :`<button class="add-btn" onclick="openGrupoEmpItem('${g.id}','${g.tipo==='receber'?'receber':'pagar'}')">＋ Novo</button>`;
+      const rows=g.itens.map((item,j)=>`<tr>
+        <td><input type="checkbox" ${item.pago?'checked':''} onchange="D.gruposEmp[${gi_idx}].itens[${j}].pago=this.checked;save();renderEmpresaBlocks();renderDash()"></td>
+        <td title="${item.desc}">${item.desc}</td>
+        <td style="text-align:right;color:${item.tipo==='receber'?'#2e7d45':'#c0392b'}">${item.tipo==='receber'?'+':'-'}${brl(item.val)}</td>
+        <td style="text-align:center">${vencBadge(item.data||'',item.pago)}</td>
+        <td><span class="badge ${item.pago?'badge-paid':'badge-pending'}">${item.pago?'Baixado':'Pend.'}</span></td>
+        <td><button class="action-btn" onclick="D.gruposEmp[${gi_idx}].itens.splice(${j},1);save();renderEmpresaBlocks()" title="Excluir">🗑️</button></td>
+      </tr>`).join('');
+      html+=`<div class="card" style="margin-bottom:1rem">
+        <div class="card-title"><span>${tipoIcon} ${g.nome}</span>
+          <div style="display:flex;gap:6px">${mv}${addBtns}${del}</div>
+        </div>
+        ${g.itens.length?`<table><thead><tr><th style="width:30px"></th><th>Descrição</th><th style="width:100px">Valor</th><th style="width:90px">Vencimento</th><th style="width:70px">Status</th><th style="width:30px"></th></tr></thead>
+        <tbody>${rows}</tbody>
+        <tfoot><tr class="total-row"><td colspan="2">Saldo pendente</td><td style="text-align:right;color:${saldo>=0?'#2e7d45':'#c0392b'}">${saldo>=0?'+':''}${brl(saldo)}</td><td colspan="3"></td></tr></tfoot></table>`
+        :`<div style="text-align:center;padding:1rem;color:#bbb;font-size:13px">Nenhum item ainda.</div>`}
+      </div>`;
+    }
+  });
+
+  html+=`<div style="display:flex;justify-content:flex-end;margin-top:.5rem">
+    <button class="add-btn" onclick="openModal('grupo-emp-novo')">＋ Novo grupo personalizado</button>
+  </div>`;
+
+  container.innerHTML=html;
+
+  // preencher tabelas
+  renderItemTableEmp('boletos','tb-boletos-e','tot-boletos-e',['be-desc','be-val','be-venc','boleto-edit']);
+  renderLinkTableEmp('tb-links-e','tot-links-e');
+  renderItemTableEmp('empresa','tb-empresa-e','tot-empresa-e',['ee-desc','ee-val','ee-venc','empresa-edit']);
+  renderCartaoTableEmp('cartoes','tb-cartoes-e','tot-cartoes-e',true);
+  renderCartaoTableEmp('emprestimos','tb-emp-e','tot-emp-e',false);
+}
+
 function renderAll(){
   renderDash();
-  renderItemTable('boletos','tb-boletos','tot-boletos');
-  renderCartoes();
-  renderItemTable('empresa','tb-empresa','tot-empresa');
+  renderEmpresaBlocks();
   renderFuncionarios();
-  renderItemTable('pessoal','tb-pessoal','tot-pessoal');
-  renderItemTable('cartoesPes','tb-cartao-pes','tot-cartao-pes');
-  renderLinks();
-  renderPessoaSection('mae','Mãe','Mãe');
-  renderPessoaSection('luana','Luana','Luana');
-  renderPessoaSection('deyse','Fam. Deyse','Família Deyse');
+  renderPessoalBlocks();
   renderHistorico();
 }
 
