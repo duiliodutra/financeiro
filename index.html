@@ -19,6 +19,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .topbar{background:#1a1a1a;color:#fff;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
 .topbar h1{font-size:15px;font-weight:600;letter-spacing:.02em}
 .topbar span{font-size:12px;color:#888}
+.titulo-editavel{cursor:pointer;border-bottom:1px dashed #ccc;display:inline-block}
+.titulo-editavel:hover{border-bottom-color:#1a1a1a}
 .login-screen{position:fixed;inset:0;background:#f5f5f0;z-index:999;display:flex;align-items:center;justify-content:center;padding:20px}
 .login-box{background:#fff;border-radius:16px;padding:2rem;width:340px;max-width:100%;box-shadow:0 4px 24px rgba(0,0,0,.08)}
 .login-box h2{font-size:20px;font-weight:700;margin-bottom:6px}
@@ -144,11 +146,11 @@ tr:hover .action-btn{opacity:1}
 </div>
 
 <nav class="nav">
-  <button class="nav-btn active" onclick="nav('dashboard',this)">📊 Painel</button>
-  <button class="nav-btn" onclick="nav('empresa',this)">🏪 Empresa</button>
-  <button class="nav-btn" onclick="nav('funcionarios',this)">👥 Funcionários</button>
-  <button class="nav-btn" onclick="nav('pessoal',this)">🏠 Pessoal</button>
-  <button class="nav-btn" onclick="nav('historico',this)">📅 Histórico</button>
+  <button class="nav-btn active" data-nav="dashboard" onclick="nav('dashboard',this)">📊 <span class="nav-label">Painel</span></button>
+  <button class="nav-btn" data-nav="empresa" onclick="nav('empresa',this)">🏪 <span class="nav-label">Empresa</span></button>
+  <button class="nav-btn" data-nav="funcionarios" onclick="nav('funcionarios',this)">👥 <span class="nav-label">Funcionários</span></button>
+  <button class="nav-btn" data-nav="pessoal" onclick="nav('pessoal',this)">🏠 <span class="nav-label">Pessoal</span></button>
+  <button class="add-btn" onclick="editarNavAtivo()" title="Renomear aba ativa" style="margin-left:auto;font-size:11px">✏️ Renomear aba</button>
 </nav>
 
 <div class="content">
@@ -167,6 +169,10 @@ tr:hover .action-btn{opacity:1}
       <div class="prev-row">
         <span style="font-size:13px;color:#888">Em conta agora:</span>
         <input class="prev-input" type="number" id="em-conta" value="3000" oninput="renderDash();save()">
+      </div>
+      <div class="prev-row">
+        <span style="font-size:13px;color:#888">Recebido:</span>
+        <input class="prev-input" type="number" id="recebido" value="0" oninput="renderDash();save()" style="border-color:#2e7d45">
       </div>
     </div>
     <button class="export-btn" onclick="exportCSV()">⬇️ Exportar CSV</button>
@@ -284,10 +290,6 @@ tr:hover .action-btn{opacity:1}
 
 <!-- seções independentes removidas (agora dentro de Pessoal) -->
 
-<!-- HISTÓRICO -->
-<div id="sec-historico" class="section">
-  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:1rem">
-    <div style="display:flex;gap:6px;flex-wrap:wrap" id="hist-months"></div>
     <button class="add-btn" onclick="salvarMes()">💾 Salvar mês atual</button>
   </div>
   <div id="hist-content"></div>
@@ -480,19 +482,26 @@ let mesAtivo=''; // formato YYYY-MM
 
 function mesKey(ym){return 'finapp_mes_'+ym;}
 function dadosVazios(){
-  // retorna estrutura limpa mas mantém funcionários do mês anterior
+  // retorna estrutura limpa mas mantém funcionários, grupos e estrutura do mês atual
   const f=D.funcionarios.map(fn=>({...fn,pago:false,adicionais:[...fn.adicionais],descontos:[...fn.descontos]}));
+  const reset=arr=>arr.map(x=>({...x,pago:false}));
+  const grupos=(D.grupos||[]).map(g=>({...g,itens:reset(g.itens||[])}));
+  const gruposEmp=(D.gruposEmp||[]).map(g=>({...g,itens:reset(g.itens||[])}));
+  const blocosPessoal=D.blocosPessoal?[...D.blocosPessoal]:[];
+  const blocosEmpresa=D.blocosEmpresa?[...D.blocosEmpresa]:[];
+  const navTitulos=D.navTitulos?{...D.navTitulos}:{};
+  const blocoTitulos=D.blocoTitulos?{...D.blocoTitulos}:{};
   return{
     boletos:[],cartoes:[],emprestimos:[],empresa:[],pessoal:[],links:[],
     mae:{pago:[],rec:[]},luana:{pago:[],rec:[]},deyse:{pago:[],rec:[]},
-    cartoesPes:[],grupos:[],gruposEmp:[],blocosPessoal:[],blocosEmpresa:[],funcionarios:f,
-    prevRec:0,emConta:0,activeEmp:0,activeHistMes:null,historico:[]
+    cartoesPes:[],grupos,gruposEmp,blocosPessoal,blocosEmpresa,funcionarios:f,
+    prevRec:0,emConta:0,recebido:0,navTitulos,blocoTitulos,activeEmp:0,activeHistMes:null,historico:[]
   };
 }
 
 function salvarMesAtivo(){
   if(!mesAtivo)return;
-  const snap={...D,prevRec:parseFloat(gi('prev-rec').value)||0,emConta:parseFloat(gi('em-conta').value)||0};
+  const snap={...D,prevRec:parseFloat(gi('prev-rec').value)||0,emConta:parseFloat(gi('em-conta').value)||0,recebido:parseFloat(gi('recebido').value)||0};
   try{localStorage.setItem(mesKey(mesAtivo),JSON.stringify(snap));}catch(e){}
 }
 
@@ -507,6 +516,7 @@ function carregarMes(ym){
   }
   gi('prev-rec').value=D.prevRec||0;
   gi('em-conta').value=D.emConta||0;
+  gi('recebido').value=D.recebido||0;
   renderSeletorMes();
   renderAll();
 }
@@ -602,6 +612,15 @@ async function copiarDoMesAnterior(){
     D.deyse={pago:reset(prev.deyse?.pago||[]),rec:reset(prev.deyse?.rec||[])};
     D.cartoesPes=reset(prev.cartoesPes||[]);
     D.funcionarios=(prev.funcionarios||[]).map(f=>({...f,pago:false}));
+    // copiar grupos personalizados (resetando pago dos itens)
+    D.grupos=(prev.grupos||[]).map(g=>({...g,itens:reset(g.itens||[])}));
+    D.gruposEmp=(prev.gruposEmp||[]).map(g=>({...g,itens:reset(g.itens||[])}));
+    // copiar ordem dos blocos
+    D.blocosPessoal=prev.blocosPessoal?[...prev.blocosPessoal]:[];
+    D.blocosEmpresa=prev.blocosEmpresa?[...prev.blocosEmpresa]:[];
+    // copiar títulos customizados
+    D.navTitulos=prev.navTitulos?{...prev.navTitulos}:{};
+    D.blocoTitulos=prev.blocoTitulos?{...prev.blocoTitulos}:{};
   }
 
   // tenta buscar do Firestore primeiro
@@ -704,7 +723,7 @@ function save(){
   clearTimeout(saveTimer);
   setSyncStatus('saving');
   saveTimer=setTimeout(()=>{
-    const snap={...D,prevRec:parseFloat(gi('prev-rec').value)||0,emConta:parseFloat(gi('em-conta').value)||0};
+    const snap={...D,prevRec:parseFloat(gi('prev-rec').value)||0,emConta:parseFloat(gi('em-conta').value)||0,recebido:parseFloat(gi('recebido').value)||0};
     db.collection('usuarios').doc(uidAtual)
       .collection('meses').doc(mesAtivo)
       .set(snap)
@@ -740,6 +759,7 @@ function load(){
   if(raw){try{D=JSON.parse(raw);}catch(e){}}
   gi('prev-rec').value=D.prevRec||131000;
   gi('em-conta').value=D.emConta||3000;
+  gi('recebido').value=D.recebido||0;
 }
 
 async function iniciarApp(){
@@ -991,7 +1011,26 @@ function tF(){return D.funcionarios.filter(f=>!f.pago).reduce((s,f)=>s+calcSal(f
 function tE(){return D.empresa.filter(x=>!x.pago).reduce((s,x)=>s+x.val,0)}
 function tP(){return D.pessoal.filter(x=>!x.pago).reduce((s,x)=>s+x.val,0)}
 function tCP(){return(D.cartoesPes||[]).filter(x=>!x.pago).reduce((s,x)=>s+x.val,0)}
-function GT(){return tB()+tC()+tL()+tEmp()+tF()+tE()+tP()+tCP()+totPG('mae')+totPG('luana')+totPG('deyse')}
+
+// Grupos personalizados de Pessoal — soma itens "pagar" pendentes, subtrai "receber" pendentes
+function tGruposPessoal(){
+  return(D.grupos||[]).reduce((total,g)=>{
+    const pagar=g.itens.filter(x=>x.tipo==='pagar'&&!x.pago).reduce((s,x)=>s+x.val,0);
+    const receber=g.itens.filter(x=>x.tipo==='receber'&&!x.pago).reduce((s,x)=>s+x.val,0);
+    return total+(pagar-receber);
+  },0);
+}
+
+// Grupos personalizados de Empresa — mesma lógica
+function tGruposEmpresa(){
+  return(D.gruposEmp||[]).reduce((total,g)=>{
+    const pagar=g.itens.filter(x=>x.tipo==='pagar'&&!x.pago).reduce((s,x)=>s+x.val,0);
+    const receber=g.itens.filter(x=>x.tipo==='receber'&&!x.pago).reduce((s,x)=>s+x.val,0);
+    return total+(pagar-receber);
+  },0);
+}
+
+function GT(){return tB()+tC()+tL()+tEmp()+tF()+tE()+tP()+tCP()+totPG('mae')+totPG('luana')+totPG('deyse')+tGruposPessoal()+tGruposEmpresa()}
 
 function renderCartoes(){
   let tt=0;
@@ -1038,17 +1077,49 @@ function renderLinks(){
 function renderDash(){
   const prev=parseFloat(gi('prev-rec').value)||0;
   const emC=parseFloat(gi('em-conta').value)||0;
-  const gt=GT();
+  const recebido=parseFloat(gi('recebido').value)||0;
+  const gt=GT(); // total pendente
+  // Total geral — tudo independente de pago ou não
+  const gtTotal=
+    D.boletos.reduce((s,x)=>s+x.val,0)+
+    D.cartoes.reduce((s,x)=>s+x.total,0)+
+    D.emprestimos.reduce((s,x)=>s+x.total,0)+
+    D.links.reduce((s,x)=>s+x.total,0)+
+    D.funcionarios.reduce((s,f)=>s+calcSal(f).liquido,0)+
+    D.empresa.reduce((s,x)=>s+x.val,0)+
+    D.pessoal.reduce((s,x)=>s+x.val,0)+
+    (D.cartoesPes||[]).reduce((s,x)=>s+x.val,0)+
+    D.mae.pago.reduce((s,x)=>s+x.val,0)+
+    D.luana.pago.reduce((s,x)=>s+x.val,0)+
+    D.deyse.pago.reduce((s,x)=>s+x.val,0)+
+    (D.grupos||[]).reduce((s,g)=>s+g.itens.filter(x=>x.tipo==='pagar').reduce((a,x)=>a+x.val,0),0)+
+    (D.gruposEmp||[]).reduce((s,g)=>s+g.itens.filter(x=>x.tipo==='pagar').reduce((a,x)=>a+x.val,0),0);
+  const prevRestante=Math.max(0,prev-recebido);
   const falta=gt-emC;
-  const caixa=prev+emC-gt;
+  const caixa=emC+prevRestante-gt;
   const labelMes=mesAtivo?mesLabel(mesAtivo):'';
   gi('dash-mes-label').textContent=labelMes;
   gi('dash-metrics').innerHTML=`
+    <div class="metric"><div class="label">Total de contas</div><div class="value danger">${brl(gtTotal)}</div></div>
     <div class="metric"><div class="label">Total pendente</div><div class="value danger">${brl(gt)}</div></div>
     <div class="metric"><div class="label">Prev. recebimento</div><div class="value success">${brl(prev)}</div></div>
+    <div class="metric"><div class="label">Já recebido</div><div class="value success">${brl(recebido)}</div></div>
+    <div class="metric"><div class="label">A receber ainda</div><div class="value warning">${brl(prevRestante)}</div></div>
+    <div class="metric"><div class="label">Em conta</div><div class="value">${brl(emC)}</div></div>
     <div class="metric"><div class="label">Falta pagar</div><div class="value ${falta>0?'danger':'success'}">${brl(falta)}</div></div>
     <div class="metric"><div class="label">Prev. caixa final</div><div class="value ${caixa>=0?'success':'danger'}">${brl(caixa)}</div></div>`;
-  const cats=[['Boletos',tB(),'#E24B4A'],['Cartões',tC(),'#D4537E'],['Links',tL(),'#1D9E75'],['Funcionários',tF(),'#639922'],['Empresa',tE(),'#378ADD'],['Pessoal',tP(),'#BA7517'],['Mãe',totPG('mae'),'#7F77DD'],['Luana',totPG('luana'),'#D85A30'],['Fam. Deyse',totPG('deyse'),'#0F6E56']];
+  const coresGrupos=['#8B5CF6','#F59E0B','#06B6D4','#84CC16','#F97316','#EC4899','#14B8A6','#6366F1'];
+  const catsGruposPes=(D.grupos||[]).map((g,i)=>{
+    const pagar=g.itens.filter(x=>x.tipo==='pagar'&&!x.pago).reduce((s,x)=>s+x.val,0);
+    const receber=g.itens.filter(x=>x.tipo==='receber'&&!x.pago).reduce((s,x)=>s+x.val,0);
+    return[g.nome,Math.max(0,pagar-receber),coresGrupos[i%coresGrupos.length]];
+  }).filter(([,v])=>v>0);
+  const catsGruposEmp=(D.gruposEmp||[]).map((g,i)=>{
+    const pagar=g.itens.filter(x=>x.tipo==='pagar'&&!x.pago).reduce((s,x)=>s+x.val,0);
+    const receber=g.itens.filter(x=>x.tipo==='receber'&&!x.pago).reduce((s,x)=>s+x.val,0);
+    return['🏪 '+g.nome,Math.max(0,pagar-receber),coresGrupos[(i+4)%coresGrupos.length]];
+  }).filter(([,v])=>v>0);
+  const cats=[['Boletos',tB(),'#E24B4A'],['Cartões emp.',tC(),'#D4537E'],['Empréstimos',tEmp(),'#F97316'],['Links',tL(),'#1D9E75'],['Funcionários',tF(),'#639922'],['Outras contas',tE(),'#378ADD'],['Pessoal',tP(),'#BA7517'],['Cartões pes.',tCP(),'#A855F7'],['Mãe',totPG('mae'),'#7F77DD'],['Luana',totPG('luana'),'#D85A30'],['Fam. Deyse',totPG('deyse'),'#0F6E56'],...catsGruposPes,...catsGruposEmp];
   gi('dash-summary').innerHTML=cats.map(([l,v])=>`<div class="sal-row"><span>${l}</span><span>${brl(v)}</span></div>`).join('')+`<div class="sal-total"><span>TOTAL</span><span class="red">${brl(gt)}</span></div>`;
   gi('dash-bars').innerHTML=cats.map(([l,v,c])=>`<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px"><span style="color:#888">${l}</span><span>${brl(v)}</span></div><div class="progress-bar"><div class="progress-fill" style="width:${gt?Math.min(100,Math.round(v/gt*100)):0}%;background:${c}"></div></div></div>`).join('');
 }
@@ -1083,8 +1154,21 @@ function salvarMes(){
   const meses=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
   const label=meses[now.getMonth()]+'/'+String(now.getFullYear()).slice(2);
   const prev=parseFloat(gi('prev-rec').value)||0;
-  D.historico.push({label,prevRec:prev,total:GT(),func:tF(),
-    cats:[['Boletos',tB()],['Cartões',tC()],['Links',tL()],['Funcionários',tF()],['Empresa',tE()],['Pessoal',tP()],['Mãe',totPG('mae')],['Luana',totPG('luana')],['Fam. Deyse',totPG('deyse')]],
+  const catsGruposHist=[
+    ...(D.grupos||[]).map(g=>{
+      const v=g.itens.filter(x=>x.tipo==='pagar'&&!x.pago).reduce((s,x)=>s+x.val,0)
+              -g.itens.filter(x=>x.tipo==='receber'&&!x.pago).reduce((s,x)=>s+x.val,0);
+      return[g.nome,Math.max(0,v)];
+    }).filter(([,v])=>v>0),
+    ...(D.gruposEmp||[]).map(g=>{
+      const v=g.itens.filter(x=>x.tipo==='pagar'&&!x.pago).reduce((s,x)=>s+x.val,0)
+              -g.itens.filter(x=>x.tipo==='receber'&&!x.pago).reduce((s,x)=>s+x.val,0);
+      return['🏪 '+g.nome,Math.max(0,v)];
+    }).filter(([,v])=>v>0)
+  ];
+  const recebidoHist=parseFloat(gi('recebido').value)||0;
+  D.historico.push({label,prevRec:prev,recebido:recebidoHist,total:GT(),func:tF(),
+    cats:[['Boletos',tB()],['Cartões emp.',tC()],['Empréstimos',tEmp()],['Links',tL()],['Funcionários',tF()],['Outras contas',tE()],['Pessoal',tP()],['Cartões pes.',tCP()],['Mãe',totPG('mae')],['Luana',totPG('luana')],['Fam. Deyse',totPG('deyse')],...catsGruposHist],
     funcs:D.funcionarios.map(f=>({nome:f.nome,liq:calcSal(f).liquido}))
   });
   D.activeHistMes=D.historico.length-1;save();alert('Mês '+label+' salvo!');renderHistorico();
@@ -1222,14 +1306,14 @@ function renderPessoalBlocks(){
         </div>
         <div class="grid3">
           <div><div style="font-size:12px;color:#888;margin-bottom:6px">Pago pra ela <button class="add-btn" onclick="openModal('mae-pago')" style="margin-left:4px">＋</button></div>
-            <table><thead><tr><th style="width:28px"></th><th>Descrição</th><th>Valor</th><th style="width:28px"></th></tr></thead>
+            <table><thead><tr><th style="width:28px"></th><th>Descrição</th><th style="width:90px">Valor</th><th style="width:70px">Status</th><th style="width:56px"></th></tr></thead>
             <tbody id="tb-mae-pago-b"></tbody>
-            <tfoot><tr class="total-row"><td colspan="2">Total</td><td id="tot-mae-pago-b"></td><td></td></tr></tfoot></table>
+            <tfoot><tr class="total-row"><td colspan="2">Total</td><td id="tot-mae-pago-b"></td><td colspan="2"></td></tr></tfoot></table>
           </div>
           <div><div style="font-size:12px;color:#888;margin-bottom:6px">Ela me deve <button class="add-btn" onclick="openModal('mae-rec')" style="margin-left:4px">＋</button></div>
-            <table><thead><tr><th style="width:28px"></th><th>Descrição</th><th>Valor</th><th style="width:28px"></th></tr></thead>
+            <table><thead><tr><th style="width:28px"></th><th>Descrição</th><th style="width:90px">Valor</th><th style="width:70px">Status</th><th style="width:56px"></th></tr></thead>
             <tbody id="tb-mae-rec-b"></tbody>
-            <tfoot><tr class="total-row"><td colspan="2">Total</td><td id="tot-mae-rec-b"></td><td></td></tr></tfoot></table>
+            <tfoot><tr class="total-row"><td colspan="2">Total</td><td id="tot-mae-rec-b"></td><td colspan="2"></td></tr></tfoot></table>
           </div>
           <div><div style="font-size:12px;color:#888;margin-bottom:6px">Saldo</div>
             <div class="sal-row"><span>Você pagou</span><span class="red">${brl(g)}</span></div>
@@ -1246,14 +1330,14 @@ function renderPessoalBlocks(){
         </div>
         <div class="grid3">
           <div><div style="font-size:12px;color:#888;margin-bottom:6px">Pago pra ela <button class="add-btn" onclick="openModal('luana-pago')" style="margin-left:4px">＋</button></div>
-            <table><thead><tr><th style="width:28px"></th><th>Descrição</th><th>Valor</th><th style="width:28px"></th></tr></thead>
+            <table><thead><tr><th style="width:28px"></th><th>Descrição</th><th style="width:90px">Valor</th><th style="width:70px">Status</th><th style="width:56px"></th></tr></thead>
             <tbody id="tb-luana-pago-b"></tbody>
-            <tfoot><tr class="total-row"><td colspan="2">Total</td><td id="tot-luana-pago-b"></td><td></td></tr></tfoot></table>
+            <tfoot><tr class="total-row"><td colspan="2">Total</td><td id="tot-luana-pago-b"></td><td colspan="2"></td></tr></tfoot></table>
           </div>
           <div><div style="font-size:12px;color:#888;margin-bottom:6px">Ela me deve <button class="add-btn" onclick="openModal('luana-rec')" style="margin-left:4px">＋</button></div>
-            <table><thead><tr><th style="width:28px"></th><th>Descrição</th><th>Valor</th><th style="width:28px"></th></tr></thead>
+            <table><thead><tr><th style="width:28px"></th><th>Descrição</th><th style="width:90px">Valor</th><th style="width:70px">Status</th><th style="width:56px"></th></tr></thead>
             <tbody id="tb-luana-rec-b"></tbody>
-            <tfoot><tr class="total-row"><td colspan="2">Total</td><td id="tot-luana-rec-b"></td><td></td></tr></tfoot></table>
+            <tfoot><tr class="total-row"><td colspan="2">Total</td><td id="tot-luana-rec-b"></td><td colspan="2"></td></tr></tfoot></table>
           </div>
           <div><div style="font-size:12px;color:#888;margin-bottom:6px">Saldo</div>
             <div class="sal-row"><span>Você pagou</span><span class="red">${brl(g)}</span></div>
@@ -1270,14 +1354,14 @@ function renderPessoalBlocks(){
         </div>
         <div class="grid3">
           <div><div style="font-size:12px;color:#888;margin-bottom:6px">Pago pra eles <button class="add-btn" onclick="openModal('deyse-pago')" style="margin-left:4px">＋</button></div>
-            <table><thead><tr><th style="width:28px"></th><th>Descrição</th><th>Valor</th><th style="width:28px"></th></tr></thead>
+            <table><thead><tr><th style="width:28px"></th><th>Descrição</th><th style="width:90px">Valor</th><th style="width:70px">Status</th><th style="width:56px"></th></tr></thead>
             <tbody id="tb-deyse-pago-b"></tbody>
-            <tfoot><tr class="total-row"><td colspan="2">Total</td><td id="tot-deyse-pago-b"></td><td></td></tr></tfoot></table>
+            <tfoot><tr class="total-row"><td colspan="2">Total</td><td id="tot-deyse-pago-b"></td><td colspan="2"></td></tr></tfoot></table>
           </div>
           <div><div style="font-size:12px;color:#888;margin-bottom:6px">Eles me devem <button class="add-btn" onclick="openModal('deyse-rec')" style="margin-left:4px">＋</button></div>
-            <table><thead><tr><th style="width:28px"></th><th>Descrição</th><th>Valor</th><th style="width:28px"></th></tr></thead>
+            <table><thead><tr><th style="width:28px"></th><th>Descrição</th><th style="width:90px">Valor</th><th style="width:70px">Status</th><th style="width:56px"></th></tr></thead>
             <tbody id="tb-deyse-rec-b"></tbody>
-            <tfoot><tr class="total-row"><td colspan="2">Total</td><td id="tot-deyse-rec-b"></td><td></td></tr></tfoot></table>
+            <tfoot><tr class="total-row"><td colspan="2">Total</td><td id="tot-deyse-rec-b"></td><td colspan="2"></td></tr></tfoot></table>
           </div>
           <div><div style="font-size:12px;color:#888;margin-bottom:6px">Saldo</div>
             <div class="sal-row"><span>Você pagou</span><span class="red">${brl(g)}</span></div>
@@ -1305,7 +1389,10 @@ function renderPessoalBlocks(){
         <td style="text-align:right;color:${item.tipo==='receber'?'#2e7d45':'#c0392b'}">${item.tipo==='receber'?'+':'-'}${brl(item.val)}</td>
         <td style="text-align:center;font-size:12px;color:#888">${item.data?item.data.split('-').reverse().slice(0,2).join('/'):'-'}</td>
         <td><span class="badge ${item.pago?'badge-paid':'badge-pending'}">${item.pago?'Baixado':'Pend.'}</span></td>
-        <td><button class="action-btn" onclick="D.grupos[${gi_idx}].itens.splice(${j},1);save();renderPessoalBlocks()" title="Excluir">🗑️</button></td>
+        <td><div class="row-actions">
+          <button class="action-btn" onclick="editarGrupoItem(false,${gi_idx},${j})" title="Editar">✏️</button>
+          <button class="action-btn" onclick="D.grupos[${gi_idx}].itens.splice(${j},1);save();renderPessoalBlocks()" title="Excluir">🗑️</button>
+        </div></td>
       </tr>`).join('');
       html+=`<div class="card" style="margin-bottom:1rem">
         <div class="card-title"><span>${tipoIcon} ${g.nome}</span>
@@ -1367,9 +1454,14 @@ function renderPessoaTableInto(key,sub,tbodyId,totId){
   if(!tbody)return;
   let tot=0;
   tbody.innerHTML=D[key][sub].map((r,i)=>{tot+=r.val;return`<tr>
-    <td><input type="checkbox" ${r.pago?'checked':''} onchange="D['${key}']['${sub}'][${i}].pago=this.checked;save();renderPessoalBlocks()"></td>
-    <td>${r.desc}</td><td style="text-align:right">${brl(r.val)}</td>
-    <td><button class="action-btn" onclick="D['${key}']['${sub}'].splice(${i},1);save();renderPessoalBlocks()" title="Excluir">🗑️</button></td>
+    <td><input type="checkbox" ${r.pago?'checked':''} onchange="D['${key}']['${sub}'][${i}].pago=this.checked;save();renderPessoalBlocks();renderDash()"></td>
+    <td title="${r.desc}">${r.desc}</td>
+    <td style="text-align:right">${brl(r.val)}</td>
+    <td><span class="badge ${r.pago?'badge-paid':'badge-pending'}">${r.pago?'Pago':'Pend.'}</span></td>
+    <td><div class="row-actions">
+      <button class="action-btn" onclick="editarPessoa('${key}','${sub}',${i})" title="Editar">✏️</button>
+      <button class="action-btn" onclick="D['${key}']['${sub}'].splice(${i},1);save();renderPessoalBlocks();renderDash()" title="Excluir">🗑️</button>
+    </div></td>
   </tr>`}).join('');
   if(totEl)totEl.textContent=brl(tot);
 }
@@ -1614,10 +1706,14 @@ function renderLinkTableEmp(tbodyId,totId){
     if(!l.pago)tot+=l.total;
     return`<tr>
       <td><input type="checkbox" ${l.pago?'checked':''} onchange="D.links[${i}].pago=this.checked;save();renderEmpresaBlocks();renderDash()"></td>
-      <td>${l.desc}</td>
+      <td title="${l.desc}">${l.desc}</td>
       <td style="text-align:right">${brl(l.total)}</td>
       <td style="text-align:center">${vencBadge(l.venc||'',l.pago)}</td>
-      <td><button class="action-btn" onclick="D.links.splice(${i},1);save();renderEmpresaBlocks()" title="Excluir">🗑️</button></td>
+      <td><span class="badge ${l.pago?'badge-paid':'badge-pending'}">${l.pago?'Pago':'Pend.'}</span></td>
+      <td><div class="row-actions">
+        <button class="action-btn" onclick="editarLink(${i})" title="Editar">✏️</button>
+        <button class="action-btn" onclick="D.links.splice(${i},1);save();renderEmpresaBlocks();renderDash()" title="Excluir">🗑️</button>
+      </div></td>
     </tr>`;
   }).join('');
   if(totEl)totEl.textContent=brl(tot);
@@ -1632,10 +1728,14 @@ function renderCartaoTableEmp(key,tbodyId,totId,isCartao){
     if(!r.pago)tot+=r.total;
     return`<tr>
       <td><input type="checkbox" ${r.pago?'checked':''} onchange="D['${key}'][${i}].pago=this.checked;save();renderEmpresaBlocks();renderDash()"></td>
-      <td>${r.nome||r.desc}</td>
+      <td title="${r.nome||r.desc}">${r.nome||r.desc}</td>
       <td style="text-align:right">${brl(r.total)}</td>
       <td style="text-align:center">${vencBadge(r.venc||'',r.pago)}</td>
-      <td><button class="action-btn" onclick="D['${key}'].splice(${i},1);save();renderEmpresaBlocks()" title="Excluir">🗑️</button></td>
+      <td><span class="badge ${r.pago?'badge-paid':'badge-pending'}">${r.pago?'Pago':'Pend.'}</span></td>
+      <td><div class="row-actions">
+        <button class="action-btn" onclick="editarCartaoEmp('${key}',${i})" title="Editar">✏️</button>
+        <button class="action-btn" onclick="D['${key}'].splice(${i},1);save();renderEmpresaBlocks();renderDash()" title="Excluir">🗑️</button>
+      </div></td>
     </tr>`;
   }).join('');
   if(totEl)totEl.textContent=brl(tot);
@@ -1667,9 +1767,9 @@ function renderEmpresaBlocks(){
         <div class="card-title"><span>🌐 Links internet</span>
           <div style="display:flex;gap:6px">${mv}<button class="add-btn" onclick="openModal('link')">＋ Novo</button>${del}</div>
         </div>
-        <table><thead><tr><th style="width:30px"></th><th>Descrição</th><th style="width:100px">Total</th><th style="width:90px">Vencimento</th><th style="width:30px"></th></tr></thead>
+        <table><thead><tr><th style="width:30px"></th><th>Descrição</th><th style="width:100px">Valor</th><th style="width:90px">Vencimento</th><th style="width:70px">Status</th><th style="width:60px"></th></tr></thead>
         <tbody id="tb-links-e"></tbody>
-        <tfoot><tr class="total-row"><td colspan="2">Pendente</td><td id="tot-links-e"></td><td colspan="2"></td></tr></tfoot></table>
+        <tfoot><tr class="total-row"><td colspan="2">Pendente</td><td id="tot-links-e"></td><td colspan="3"></td></tr></tfoot></table>
       </div>`;
     } else if(tipo==='empresa'){
       html+=`<div class="card" style="margin-bottom:1rem">
@@ -1685,18 +1785,18 @@ function renderEmpresaBlocks(){
         <div class="card-title"><span>💳 Cartões não pessoais</span>
           <div style="display:flex;gap:6px">${mv}<button class="add-btn" onclick="openModal('cartao')">＋ Novo</button>${del}</div>
         </div>
-        <table><thead><tr><th style="width:30px"></th><th>Cartão</th><th style="width:100px">Total</th><th style="width:90px">Vencimento</th><th style="width:30px"></th></tr></thead>
+        <table><thead><tr><th style="width:30px"></th><th>Cartão</th><th style="width:100px">Valor</th><th style="width:90px">Vencimento</th><th style="width:70px">Status</th><th style="width:60px"></th></tr></thead>
         <tbody id="tb-cartoes-e"></tbody>
-        <tfoot><tr class="total-row"><td colspan="2">Pendente</td><td id="tot-cartoes-e"></td><td colspan="2"></td></tr></tfoot></table>
+        <tfoot><tr class="total-row"><td colspan="2">Pendente</td><td id="tot-cartoes-e"></td><td colspan="3"></td></tr></tfoot></table>
       </div>`;
     } else if(tipo==='emprestimos'){
       html+=`<div class="card" style="margin-bottom:1rem">
         <div class="card-title"><span>💰 Empréstimos</span>
           <div style="display:flex;gap:6px">${mv}<button class="add-btn" onclick="openModal('emp')">＋ Novo</button>${del}</div>
         </div>
-        <table><thead><tr><th style="width:30px"></th><th>Descrição</th><th style="width:100px">Total</th><th style="width:90px">Vencimento</th><th style="width:30px"></th></tr></thead>
+        <table><thead><tr><th style="width:30px"></th><th>Descrição</th><th style="width:100px">Valor</th><th style="width:90px">Vencimento</th><th style="width:70px">Status</th><th style="width:60px"></th></tr></thead>
         <tbody id="tb-emp-e"></tbody>
-        <tfoot><tr class="total-row"><td colspan="2">Pendente</td><td id="tot-emp-e"></td><td colspan="2"></td></tr></tfoot></table>
+        <tfoot><tr class="total-row"><td colspan="2">Pendente</td><td id="tot-emp-e"></td><td colspan="3"></td></tr></tfoot></table>
       </div>`;
     } else if(tipo.startsWith('grpemp:')){
       const gid=tipo.replace('grpemp:','');
@@ -1717,10 +1817,13 @@ function renderEmpresaBlocks(){
         <td style="text-align:right;color:${item.tipo==='receber'?'#2e7d45':'#c0392b'}">${item.tipo==='receber'?'+':'-'}${brl(item.val)}</td>
         <td style="text-align:center">${vencBadge(item.data||'',item.pago)}</td>
         <td><span class="badge ${item.pago?'badge-paid':'badge-pending'}">${item.pago?'Baixado':'Pend.'}</span></td>
-        <td><button class="action-btn" onclick="D.gruposEmp[${gi_idx}].itens.splice(${j},1);save();renderEmpresaBlocks()" title="Excluir">🗑️</button></td>
+        <td><div class="row-actions">
+          <button class="action-btn" onclick="editarGrupoItem(true,${gi_idx},${j})" title="Editar">✏️</button>
+          <button class="action-btn" onclick="D.gruposEmp[${gi_idx}].itens.splice(${j},1);save();renderEmpresaBlocks()" title="Excluir">🗑️</button>
+        </div></td>
       </tr>`).join('');
       html+=`<div class="card" style="margin-bottom:1rem">
-        <div class="card-title"><span>${tipoIcon} ${g.nome}</span>
+        <div class="card-title"><span class="titulo-editavel" onclick="editarTitulo('grupoEmp','${g.id}','${g.nome}')">${tipoIcon} ${g.nome} ✏️</span>
           <div style="display:flex;gap:6px">${mv}${addBtns}${del}</div>
         </div>
         ${g.itens.length?`<table><thead><tr><th style="width:30px"></th><th>Descrição</th><th style="width:100px">Valor</th><th style="width:90px">Vencimento</th><th style="width:70px">Status</th><th style="width:30px"></th></tr></thead>
@@ -1745,12 +1848,150 @@ function renderEmpresaBlocks(){
   renderCartaoTableEmp('emprestimos','tb-emp-e','tot-emp-e',false);
 }
 
+// ── EDIÇÃO UNIVERSAL ─────────────────────────────────────────
+let ueCtx=null; // contexto da edição atual
+
+function abrirEdicao(ctx){
+  // ctx = {title, campos:[{id,label,tipo}], valores, onSave}
+  ueCtx=ctx;
+  gi('ue-title').textContent=ctx.title||'Editar';
+  // mostrar/ocultar campos conforme necessário
+  const temNome=ctx.campos.includes('nome');
+  const temVal=ctx.campos.includes('val');
+  const temData=ctx.campos.includes('data');
+  gi('ue-nome-row').style.display=temNome?'':'none';
+  gi('ue-val-row').style.display=temVal?'':'none';
+  gi('ue-data-row').style.display=temData?'':'none';
+  if(temNome)gi('ue-nome').value=ctx.valores.nome||'';
+  if(temVal)gi('ue-val').value=ctx.valores.val||'';
+  if(temData)gi('ue-data').value=ctx.valores.data||'';
+  openModal('universal-edit');
+}
+
+function salvarEdicaoUniversal(){
+  if(!ueCtx)return;
+  const novos={};
+  if(ueCtx.campos.includes('nome'))novos.nome=gi('ue-nome').value.trim();
+  if(ueCtx.campos.includes('val'))novos.val=parseFloat(gi('ue-val').value)||0;
+  if(ueCtx.campos.includes('data'))novos.data=gi('ue-data').value;
+  ueCtx.onSave(novos);
+  closeModal('universal-edit');
+  ueCtx=null;
+}
+
+// Editar item de Mãe/Luana/Deyse (pago ou rec)
+function editarPessoa(key,sub,idx){
+  const r=D[key][sub][idx];
+  abrirEdicao({
+    title:'Editar — '+r.desc,
+    campos:['nome','val'],
+    valores:{nome:r.desc,val:r.val},
+    onSave(n){D[key][sub][idx].desc=n.nome||r.desc;D[key][sub][idx].val=n.val;save();renderPessoalBlocks();renderDash();}
+  });
+}
+
+// Editar item de grupo personalizado (pessoal ou empresa)
+function editarGrupoItem(isEmp,gi_idx,itemIdx){
+  const arr=isEmp?D.gruposEmp:D.grupos;
+  const item=arr[gi_idx].itens[itemIdx];
+  abrirEdicao({
+    title:'Editar item',
+    campos:['nome','val','data'],
+    valores:{nome:item.desc,val:item.val,data:item.data||''},
+    onSave(n){item.desc=n.nome||item.desc;item.val=n.val;item.data=n.data;save();isEmp?renderEmpresaBlocks():renderPessoalBlocks();renderDash();}
+  });
+}
+
+// Editar cartão/empréstimo da empresa
+function editarCartaoEmp(key,idx){
+  const r=D[key][idx];
+  abrirEdicao({
+    title:'Editar '+r.nome||r.desc,
+    campos:['nome','val','data'],
+    valores:{nome:r.nome||r.desc,val:r.total,data:r.venc||''},
+    onSave(n){
+      if(key==='cartoes')D[key][idx].nome=n.nome;
+      else D[key][idx].desc=n.nome;
+      D[key][idx].total=n.val;
+      D[key][idx].venc=n.data;
+      save();renderEmpresaBlocks();renderDash();
+    }
+  });
+}
+
+// Editar link
+function editarLink(idx){
+  const l=D.links[idx];
+  abrirEdicao({
+    title:'Editar link',
+    campos:['nome','val','data'],
+    valores:{nome:l.desc,val:l.total,data:l.venc||''},
+    onSave(n){D.links[idx].desc=n.nome;D.links[idx].total=n.val;D.links[idx].venc=n.data;save();renderEmpresaBlocks();renderDash();}
+  });
+}
+
+// ── EDIÇÃO DE TÍTULOS ────────────────────────────────────────
+let tituloCtx=null;
+
+function editarTitulo(tipo,id,nomeAtual){
+  tituloCtx={tipo,id};
+  gi('et-nome').value=nomeAtual;
+  openModal('edit-titulo');
+}
+
+function salvarTitulo(){
+  if(!tituloCtx)return;
+  const nome=gi('et-nome').value.trim();
+  if(!nome){closeModal('edit-titulo');return;}
+  const{tipo,id}=tituloCtx;
+  if(tipo==='grupo'){
+    const g=(D.grupos||[]).find(x=>x.id===id);
+    if(g){g.nome=nome;save();renderPessoalBlocks();}
+  } else if(tipo==='grupoEmp'){
+    const g=(D.gruposEmp||[]).find(x=>x.id===id);
+    if(g){g.nome=nome;save();renderEmpresaBlocks();}
+  } else if(tipo==='nav'){
+    if(!D.navTitulos)D.navTitulos={};
+    D.navTitulos[id]=nome;
+    save();atualizarTitulosNav();
+  } else if(tipo==='bloco'){
+    if(!D.blocoTitulos)D.blocoTitulos={};
+    D.blocoTitulos[id]=nome;
+    save();renderPessoalBlocks();renderEmpresaBlocks();
+  }
+  closeModal('edit-titulo');tituloCtx=null;
+}
+
+function atualizarTitulosNav(){
+  if(!D.navTitulos)return;
+  Object.entries(D.navTitulos).forEach(([id,nome])=>{
+    const btn=document.querySelector(`[data-nav="${id}"]`);
+    if(btn)btn.querySelector('.nav-label').textContent=nome;
+  });
+}
+
+function editarNavAtivo(){
+  const btn=document.querySelector('.nav-btn.active');
+  if(!btn)return;
+  const navId=btn.getAttribute('data-nav');
+  const nomeAtual=btn.querySelector('.nav-label').textContent;
+  editarTitulo('nav',navId,nomeAtual);
+}
+
+function atualizarTitulosNav(){
+  if(!D.navTitulos)return;
+  Object.entries(D.navTitulos).forEach(([id,nome])=>{
+    const btn=document.querySelector(`[data-nav="${id}"]`);
+    if(btn){const lbl=btn.querySelector('.nav-label');if(lbl)lbl.textContent=nome;}
+  });
+}
+
 function renderAll(){
   renderDash();
   renderEmpresaBlocks();
   renderFuncionarios();
   renderPessoalBlocks();
-  renderHistorico();
+  atualizarTitulosNav();
 }
 
 gi('topbar-date').textContent=new Date().toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'short',year:'numeric'});
@@ -1760,5 +2001,19 @@ if('serviceWorker' in navigator){
   navigator.serviceWorker.register('sw.js').then(()=>console.log('SW registrado')).catch(()=>{});
 }
 </script>
+
+<!-- MODAL UNIVERSAL DE EDIÇÃO -->
+<div class="modal-overlay" id="m-universal-edit"><div class="modal"><h3 id="ue-title">Editar</h3>
+  <div class="form-row" id="ue-nome-row"><label>Nome / Descrição</label><input type="text" id="ue-nome"></div>
+  <div class="form-row" id="ue-val-row"><label>Valor (R$)</label><input type="number" id="ue-val" step="0.01"></div>
+  <div class="form-row" id="ue-data-row"><label>Data / Vencimento</label><input type="date" id="ue-data"></div>
+  <div class="form-actions"><button class="btn-cancel" onclick="closeModal('universal-edit')">Cancelar</button><button class="btn-primary" onclick="salvarEdicaoUniversal()">Salvar</button></div>
+</div></div>
+
+<!-- MODAL EDITAR TÍTULO DE MENU/BLOCO -->
+<div class="modal-overlay" id="m-edit-titulo"><div class="modal"><h3>Editar título</h3>
+  <div class="form-row"><label>Novo nome</label><input type="text" id="et-nome"></div>
+  <div class="form-actions"><button class="btn-cancel" onclick="closeModal('edit-titulo')">Cancelar</button><button class="btn-primary" onclick="salvarTitulo()">Salvar</button></div>
+</div></div>
 </body>
 </html>
