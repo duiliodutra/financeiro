@@ -616,8 +616,8 @@ async function copiarMesAnterior(){
   D.funcionarios=(prev.funcionarios||[]).map(f=>({...f,pago:false}));
   D.gruposEmp=(prev.gruposEmp||[]).map(g=>({...g,itens:reset(g.itens)}));
   D.grupos=(prev.grupos||[]).map(g=>({...g,itens:reset(g.itens)}));
-  D.blocosEmpresa=prev.blocosEmp?[...prev.blocosEmpresa]:[];
-  D.blocosPessoal=prev.blocosPes?[...prev.blocosPessoal]:[];
+  D.blocosEmpresa=prev.blocosEmpresa?[...prev.blocosEmpresa]:(prev.blocosEmp?[...prev.blocosEmp]:[]);
+  D.blocosPessoal=prev.blocosPessoal?[...prev.blocosPessoal]:(prev.blocosPes?[...prev.blocosPes]:[]);
   D.titulosBlocos=prev.titulosBlocos?{...prev.titulosBlocos}:{};
   save();renderAll();
   alert('Copiado!');
@@ -850,6 +850,8 @@ function initBlocosEmp(){
   if(!D.blocosEmpresa||!D.blocosEmpresa.length){
     D.blocosEmpresa=['boletos','links','cartoes','emprestimos','empresa'];
   }
+  // Garantir que todos os itens são strings
+  D.blocosEmpresa=D.blocosEmpresa.filter(b=>typeof b==='string');
   (D.gruposEmp||[]).forEach(g=>{if(!D.blocosEmpresa.includes('ge:'+g.id))D.blocosEmpresa.push('ge:'+g.id);});
   D.blocosEmpresa=D.blocosEmpresa.filter(b=>!b.startsWith('ge:')||(D.gruposEmp||[]).some(g=>'ge:'+g.id===b));
 }
@@ -1069,6 +1071,8 @@ function initBlocosPes(){
   if(!D.blocosPessoal||!D.blocosPessoal.length){
     D.blocosPessoal=['pessoal','cartoesPes','mae','luana','deyse'];
   }
+  // Garantir que todos os itens são strings
+  D.blocosPessoal=D.blocosPessoal.filter(b=>typeof b==='string');
   (D.grupos||[]).forEach(g=>{if(!D.blocosPessoal.includes('gp:'+g.id))D.blocosPessoal.push('gp:'+g.id);});
   D.blocosPessoal=D.blocosPessoal.filter(b=>!b.startsWith('gp:')||(D.grupos||[]).some(g=>'gp:'+g.id===b));
 }
@@ -1628,10 +1632,10 @@ function carregarTema(){
 
 // ── RENDER ALL ────────────────────────────────────────────────
 function renderAll(){
-  renderDash();
-  renderEmpresa();
-  renderFuncionarios();
-  renderPessoal();
+  try{renderDash();}catch(e){console.error('renderDash:',e);}
+  try{renderEmpresa();}catch(e){console.error('renderEmpresa:',e);}
+  try{renderFuncionarios();}catch(e){console.error('renderFuncionarios:',e);}
+  try{renderPessoal();}catch(e){console.error('renderPessoal:',e);}
 }
 
 // ── INICIALIZAR ───────────────────────────────────────────────
