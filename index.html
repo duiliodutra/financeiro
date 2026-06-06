@@ -207,6 +207,19 @@ tr:hover .action-btn{opacity:1}
 .prev-input{font-size:15px;font-weight:600;padding:5px 10px;border:1px solid #ddd;border-radius:8px;background:#fff;color:#1a1a1a;width:170px;text-align:right}
 .empty-state{text-align:center;padding:2.5rem;color:#aaa;font-size:13px}
 .empty-state svg{display:block;margin:0 auto 10px;opacity:.3}
+.login-screen{position:fixed;inset:0;background:#f5f5f0;z-index:999;display:flex;align-items:center;justify-content:center;padding:20px}
+.login-box{background:#fff;border-radius:16px;padding:2rem;width:340px;max-width:100%;box-shadow:0 4px 24px rgba(0,0,0,.08)}
+.login-box h2{font-size:20px;font-weight:700;margin-bottom:6px}
+.login-box p{font-size:13px;color:#888;margin-bottom:1.5rem}
+.login-input{width:100%;padding:10px 12px;border:1px solid #ddd;border-radius:9px;font-size:14px;margin-bottom:10px;outline:none;box-sizing:border-box}
+.login-input:focus{border-color:#1a1a1a}
+.btn-login{width:100%;padding:11px;background:#1a1a1a;color:#fff;border:none;border-radius:9px;font-size:14px;font-weight:600;cursor:pointer;margin-top:4px}
+.btn-login:hover{background:#333}
+.login-error{color:#c0392b;font-size:12px;margin-bottom:8px;min-height:16px}
+.sync-dot{width:7px;height:7px;border-radius:50%;background:#ccc;display:inline-block;margin-right:4px}
+.sync-dot.ok{background:#2e7d45}
+.sync-dot.saving{background:#f59e0b}
+
 </style>
 </head>
 <body>
@@ -244,6 +257,7 @@ tr:hover .action-btn{opacity:1}
   <button class="nav-btn" data-nav="funcionarios" onclick="nav('funcionarios',this)">👥 <span class="nav-label">Funcionários</span></button>
   <button class="nav-btn" data-nav="pessoal" onclick="nav('pessoal',this)">🏠 <span class="nav-label">Pessoal</span></button>
   <button class="nav-btn" data-nav="calendario" onclick="nav('calendario',this)">📅 <span class="nav-label">Calendário</span></button>
+  <button class="nav-btn" data-nav="plantoes" onclick="nav('plantoes',this)">🔧 <span class="nav-label">Plantões</span></button>
   <button class="add-btn" onclick="editarNavAtivo()" title="Renomear aba ativa" style="margin-left:auto;font-size:11px">✏️ Renomear aba</button>
 </nav>
 
@@ -406,6 +420,11 @@ tr:hover .action-btn{opacity:1}
     <button class="add-btn" onclick="salvarMes()">💾 Salvar mês atual</button>
   </div>
   <div id="hist-content"></div>
+</div>
+
+<!-- PLANTÕES -->
+<div id="sec-plantoes" class="section">
+  <div id="plantoes-container"></div>
 </div>
 
 <!-- CALENDÁRIO -->
@@ -761,7 +780,8 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 let uidAtual = null;
-let modoLogin = 'login'; // ou 'cadastro'
+let modoLogin = 'login';
+
 
 function setSyncStatus(status){
   const dot=gi('sync-dot'), txt=gi('sync-txt');
@@ -817,6 +837,7 @@ auth.onAuthStateChanged(user=>{
   }
 });
 
+
 // ── SAVE / LOAD COM FIRESTORE ────────────────────────────────
 let saveTimer=null;
 function save(){
@@ -867,7 +888,6 @@ function load(){
 
 async function iniciarApp(){
   load();
-  // sobrescreve com dados do Firestore
   await carregarMesFirestore(mesAtivo);
   renderSeletorMes();
   renderAll();
@@ -1696,6 +1716,22 @@ function exportCSV(){
   a.click();
 }
 
+// ── INTERFACE FUNCIONÁRIO ────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+// Salvar UID do admin para funcionários poderem ler dados
+
+
 // ── BLOCOS ORDENÁVEIS DA ABA PESSOAL ──────────────────────────
 // blocosPessoal: array de {id, tipo} onde tipo pode ser:
 // 'pessoal','cartoesPes','mae','luana','deyse', ou 'grupo:GRUPOID'
@@ -2481,6 +2517,169 @@ function atualizarTitulosNav(){
   });
 }
 
+// ── PLANTÕES ─────────────────────────────────────────────────
+// Feriados nacionais fixos (MM-DD) e móveis calculados
+function feriadosDoAno(ano){
+  const fixos=[
+    `${ano}-01-01`,`${ano}-04-21`,`${ano}-05-01`,`${ano}-09-07`,
+    `${ano}-10-12`,`${ano}-11-02`,`${ano}-11-15`,`${ano}-11-20`,`${ano}-12-25`
+  ];
+  // Páscoa (algoritmo de Meeus/Jones/Butcher)
+  function pascoa(y){
+    const a=y%19,b=Math.floor(y/100),c=y%100;
+    const d=Math.floor(b/4),e=b%4,f=Math.floor((b+8)/25);
+    const g=Math.floor((b-f+1)/3),h=(19*a+b-d-g+15)%30;
+    const i=Math.floor(c/4),k=c%4,l=(32+2*e+2*i-h-k)%7;
+    const m=Math.floor((a+11*h+22*l)/451);
+    const mes=Math.floor((h+l-7*m+114)/31);
+    const dia=((h+l-7*m+114)%31)+1;
+    return new Date(y,mes-1,dia);
+  }
+  const p=pascoa(ano);
+  const addDias=(d,n)=>new Date(d.getFullYear(),d.getMonth(),d.getDate()+n);
+  const fmt=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  const moveis=[
+    fmt(addDias(p,-48)), // Carnaval segunda
+    fmt(addDias(p,-47)), // Carnaval terça
+    fmt(addDias(p,-2)),  // Sexta-feira Santa
+    fmt(p),              // Páscoa
+    fmt(addDias(p,60)),  // Corpus Christi
+  ];
+  return new Set([...fixos,...moveis]);
+}
+
+const NOMES_FERIADO={
+  '01-01':'Ano Novo','04-21':'Tiradentes','05-01':'Dia do Trabalho',
+  '09-07':'Independência','10-12':'N. S. Aparecida','11-02':'Finados',
+  '11-15':'Proclamação República','11-20':'Consciência Negra','12-25':'Natal'
+};
+
+function getNomeFeriado(dateStr, feriados){
+  const [,mm,dd]=dateStr.split('-');
+  return NOMES_FERIADO[`${mm}-${dd}`]||'Feriado';
+}
+
+function renderPlantoes(){
+  const container=gi('plantoes-container');
+  if(!container)return;
+
+  const hoje=new Date();hoje.setHours(0,0,0,0);
+  if(!D.plantoes)D.plantoes={};
+
+  // Cores dos técnicos (funcionários)
+  const tecnicos=D.funcionarios.map((f,i)=>({nome:f.nome,cor:CORES_FUNC[i%CORES_FUNC.length]}));
+
+  // Legenda de técnicos
+  const legendaHtml=tecnicos.length?
+    `<div class="cal-legenda"><strong style="margin-right:6px">Técnicos:</strong>`+
+    tecnicos.map(t=>`<div class="cal-legenda-item"><div class="cal-legenda-cor" style="background:${t.cor}"></div><span>${t.nome}</span></div>`).join('')+
+    `</div>`:'';
+
+  let mesesHtml='';
+
+  for(let m=0;m<12;m++){
+    const d0=new Date(hoje.getFullYear(),hoje.getMonth()+m,1);
+    const ano=d0.getFullYear(),mes=d0.getMonth();
+    const feriados=feriadosDoAno(ano);
+    const ultimoDia=new Date(ano,mes+1,0).getDate();
+    let inicioSemana=(d0.getDay()+6)%7; // seg=0
+
+    const thead='<tr>'+['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'].map(d=>`<th style="font-size:12px;font-weight:600;color:#888;text-align:center;padding:8px 4px;border-bottom:1px solid #eee;background:#fafafa">${d}</th>`).join('')+'</tr>';
+
+    let cells=[];
+    const diasAntes=new Date(ano,mes,0).getDate();
+    for(let i=inicioSemana-1;i>=0;i--)
+      cells.push({dia:diasAntes-i,outro:true,date:new Date(ano,mes-1,diasAntes-i)});
+    for(let d=1;d<=ultimoDia;d++)
+      cells.push({dia:d,outro:false,date:new Date(ano,mes,d)});
+    const resto=(7-cells.length%7)%7;
+    for(let d=1;d<=resto;d++)
+      cells.push({dia:d,outro:true,date:new Date(ano,mes+1,d)});
+
+    let tbody='';
+    for(let i=0;i<cells.length;i+=7){
+      tbody+='<tr>';
+      for(let j=0;j<7;j++){
+        const cell=cells[i+j];
+        const dow=cell.date.getDay(); // 0=dom,6=sab
+        const isSab=dow===6,isDom=dow===0;
+        const dateStr=`${cell.date.getFullYear()}-${String(cell.date.getMonth()+1).padStart(2,'0')}-${String(cell.date.getDate()).padStart(2,'0')}`;
+        const isFeriado=!cell.outro&&feriados.has(dateStr);
+        const isHoje=!cell.outro&&cell.date.toDateString()===hoje.toDateString();
+        const isPlantao=!cell.outro&&(isSab||isDom||isFeriado);
+
+        if(!isPlantao&&!cell.outro){
+          tbody+=`<td style="border:1px solid #f0f0ea;padding:6px;height:90px;vertical-align:top;background:#fff;width:14.28%">
+            <div style="font-size:13px;font-weight:${isHoje?700:500};color:${isHoje?'#1a1a1a':'#aaa'}">${cell.dia}</div>
+          </td>`;
+          continue;
+        }
+        if(cell.outro){
+          tbody+=`<td style="border:1px solid #f0f0ea;padding:6px;height:90px;background:#fafafa;width:14.28%;opacity:.3">
+            <div style="font-size:13px;color:#ccc">${cell.dia}</div>
+          </td>`;
+          continue;
+        }
+
+        // Célula de plantão
+        const tipoLabel=isFeriado?'Feriado':isSab?'Sábado':'Domingo';
+        const tipoCls=isFeriado?'tipo-feriado':isSab?'tipo-sab':'tipo-dom';
+        const bgCel=isFeriado?'#fffbf0':isSab?'#f0f7ff':'#fff5f5';
+        const nomeFeriado=isFeriado?getNomeFeriado(dateStr,feriados):'';
+
+        // Técnicos escalados nesse dia
+        const escalados=D.plantoes[dateStr]||[];
+        const escaladosHtml=escalados.map((nome,idx)=>{
+          const tec=tecnicos.find(t=>t.nome===nome)||{cor:'#888'};
+          return`<span class="plantao-tag" style="background:${tec.cor}" onclick="removerPlantao('${dateStr}',${idx})" title="Clique para remover">${nome} ✕</span>`;
+        }).join('');
+
+        // Botão adicionar
+        const addHtml=`<select class="plantao-add-btn" onchange="adicionarPlantao('${dateStr}',this.value);this.value=''" style="font-size:11px;padding:2px 4px;border:1px dashed #bbb;border-radius:8px;background:none;color:#888;cursor:pointer;max-width:100%;margin-top:2px">
+          <option value="">+ Escalar</option>
+          ${tecnicos.map(t=>`<option value="${t.nome}">${t.nome}</option>`).join('')}
+        </select>`;
+
+        tbody+=`<td class="cal-plantao-td" style="background:${bgCel};border:1px solid #e8e8e4;padding:5px;height:90px;vertical-align:top;width:14.28%;position:relative">
+          <div class="cal-plantao-num">
+            <span style="font-size:13px;font-weight:${isHoje?700:600};${isHoje?'background:#1a1a1a;color:#fff;border-radius:50%;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;font-size:12px':''}">${cell.dia}</span>
+            <span class="cal-plantao-tipo ${tipoCls}">${tipoLabel}</span>
+          </div>
+          ${nomeFeriado?`<div style="font-size:10px;color:#92400e;font-weight:600;margin-bottom:2px">${nomeFeriado}</div>`:''}
+          <div style="display:flex;flex-wrap:wrap;gap:1px;margin-bottom:2px">${escaladosHtml}</div>
+          ${addHtml}
+        </td>`;
+      }
+      tbody+='</tr>';
+    }
+
+    mesesHtml+=`<div class="cal-mes" style="margin-bottom:2rem">
+      <div class="cal-mes-titulo" style="font-size:17px;font-weight:700;padding:14px 18px 10px;border-bottom:1px solid #f0f0ea">
+        ${MESES_CAL[mes]} ${ano}
+      </div>
+      <table style="width:100%;border-collapse:collapse;table-layout:fixed"><thead>${thead}</thead><tbody>${tbody}</tbody></table>
+    </div>`;
+  }
+
+  container.innerHTML=legendaHtml+`<div style="padding:1rem">${mesesHtml}</div>`;
+}
+
+function adicionarPlantao(dateStr,nome){
+  if(!nome)return;
+  if(!D.plantoes)D.plantoes={};
+  if(!D.plantoes[dateStr])D.plantoes[dateStr]=[];
+  if(D.plantoes[dateStr].includes(nome))return; // sem duplicata
+  D.plantoes[dateStr].push(nome);
+  save();renderPlantoes();
+}
+
+function removerPlantao(dateStr,idx){
+  if(!D.plantoes||!D.plantoes[dateStr])return;
+  D.plantoes[dateStr].splice(idx,1);
+  if(!D.plantoes[dateStr].length)delete D.plantoes[dateStr];
+  save();renderPlantoes();
+}
+
 // ── CALENDÁRIO DE FÉRIAS ─────────────────────────────────────
 const CORES_FUNC=['#E24B4A','#378ADD','#639922','#D4537E','#7F77DD','#D85A30','#0F6E56','#BA7517','#06B6D4','#F59E0B'];
 const DIAS_SEMANA=['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'];
@@ -2576,11 +2775,10 @@ function renderCalendario(){
             const isInicio=cell.date.toDateString()===fe.inicio.toDateString();
             const isFim=cell.date.toDateString()===fe.fim.toDateString();
             const classBarra=isInicio&&isFim?'cal-ferias-bar cal-ferias-unico':isInicio?'cal-ferias-bar cal-ferias-inicio':isFim?'cal-ferias-bar cal-ferias-fim':'cal-ferias-bar';
-            const bottom=idx*7;
-            feriasHtml+=`<div class="${classBarra}" style="background:${fe.cor};bottom:${bottom}px"></div>`;
-            if(isInicio){
-              feriasHtml+=`<div class="cal-ferias-nome-tag" style="bottom:${bottom+8}px;background:${fe.cor}">${fe.nome}</div>`;
-            }
+            const bottom=idx*22;
+            feriasHtml+=`<div class="${classBarra}" style="background:${fe.cor};bottom:${bottom}px;height:20px;display:flex;align-items:center;padding:0 5px;overflow:hidden">
+              <span style="font-size:10px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:100%">${fe.nome}</span>
+            </div>`;
           });
         }
 
@@ -2610,6 +2808,7 @@ function renderAll(){
   renderFuncionarios();
   renderPessoalBlocks();
   renderCalendario();
+  renderPlantoes();
   atualizarTitulosNav();
 }
 
@@ -2630,7 +2829,10 @@ function carregarTema(){
 }
 carregarTema();
 
-gi('topbar-date').textContent=new Date().toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'short',year:'numeric'});
+try{
+  const topbarDate=gi('topbar-date');
+  if(topbarDate)topbarDate.textContent=new Date().toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'short',year:'numeric'});
+}catch(e){}
 // Firebase cuida do load via onAuthStateChanged → iniciarApp()
 // Registrar Service Worker
 if('serviceWorker' in navigator){
@@ -2651,5 +2853,6 @@ if('serviceWorker' in navigator){
   <div class="form-row"><label>Novo nome</label><input type="text" id="et-nome"></div>
   <div class="form-actions"><button class="btn-cancel" onclick="closeModal('edit-titulo')">Cancelar</button><button class="btn-primary" onclick="salvarTitulo()">Salvar</button></div>
 </div></div>
+
 </body>
 </html>
