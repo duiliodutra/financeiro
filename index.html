@@ -887,6 +887,11 @@ function load(){
 }
 
 async function iniciarApp(){
+  // Mostrar interface admin
+  ['admin-topbar','mes-bar-wrap','admin-nav','main-content'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el)el.style.display='';
+  });
   load();
   await carregarMesFirestore(mesAtivo);
   renderSeletorMes();
