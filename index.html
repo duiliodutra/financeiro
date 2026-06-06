@@ -679,9 +679,9 @@ function calcSal(f){
 }
 
 function tBoletos(){return(D.boletos||[]).filter(x=>!x.pago).reduce((s,x)=>s+x.val,0);}
-function tLinks(){return(D.links||[]).filter(x=>!x.pago).reduce((s,x)=>s+x.val,0);}
-function tCartoesEmp(){return(D.cartoes||[]).filter(x=>!x.pago).reduce((s,x)=>s+x.val,0);}
-function tEmprestimos(){return(D.emprestimos||[]).filter(x=>!x.pago).reduce((s,x)=>s+x.val,0);}
+function tLinks(){return(D.links||[]).filter(x=>!x.pago).reduce((s,x)=>s+(x.val||x.total||0),0);}
+function tCartoesEmp(){return(D.cartoes||[]).filter(x=>!x.pago).reduce((s,x)=>s+(x.val||x.total||0),0);}
+function tEmprestimos(){return(D.emprestimos||[]).filter(x=>!x.pago).reduce((s,x)=>s+(x.val||x.total||0),0);}
 function tOutrasEmp(){return(D.empresa||[]).filter(x=>!x.pago).reduce((s,x)=>s+x.val,0);}
 function tFunc(){return(D.funcionarios||[]).filter(f=>!f.pago).reduce((s,f)=>s+calcSal(f).liquido,0);}
 function tContasPes(){return(D.pessoal||[]).filter(x=>!x.pago).reduce((s,x)=>s+x.val,0);}
@@ -705,7 +705,7 @@ function GT(){
 
 function totalTudo(){
   const all=[...(D.boletos||[]),...(D.links||[]),...(D.cartoes||[]),...(D.emprestimos||[]),...(D.empresa||[]),...(D.pessoal||[]),...(D.cartoesPes||[]),...(D.mae?.pago||[]),...(D.luana?.pago||[]),...(D.deyse?.pago||[])];
-  const base=all.reduce((s,x)=>s+x.val,0);
+  const base=all.reduce((s,x)=>s+(x.val||x.total||0),0);
   const func=(D.funcionarios||[]).reduce((s,f)=>s+calcSal(f).liquido,0);
   const grps=[...(D.gruposEmp||[]),...(D.grupos||[])].reduce((s,g)=>{
     return s+(g.itens||[]).filter(x=>x.tipo==='pagar').reduce((ss,x)=>ss+x.val,0);
@@ -746,9 +746,9 @@ function renderDash(){
     if(diff>=-3&&diff<=5)alertas.push({desc,val,venc,diff,cat});
   }
   (D.boletos||[]).forEach(x=>addAlerta(x.desc,x.val,x.venc,'Boleto',x.pago));
-  (D.links||[]).forEach(x=>addAlerta(x.desc,x.val,x.venc,'Link',x.pago));
-  (D.cartoes||[]).forEach(x=>addAlerta(x.desc,x.val,x.venc,'Cartão emp.',x.pago));
-  (D.emprestimos||[]).forEach(x=>addAlerta(x.desc,x.val,x.venc,'Empréstimo',x.pago));
+  (D.links||[]).forEach(x=>addAlerta(x.desc,x.val||x.total||0,x.venc,'Link',x.pago));
+  (D.cartoes||[]).forEach(x=>addAlerta(x.desc||x.nome||'',x.val||x.total||0,x.venc,'Cartão emp.',x.pago));
+  (D.emprestimos||[]).forEach(x=>addAlerta(x.desc,x.val||x.total||0,x.venc,'Empréstimo',x.pago));
   (D.empresa||[]).forEach(x=>addAlerta(x.desc,x.val,x.venc,'Empresa',x.pago));
   (D.pessoal||[]).forEach(x=>addAlerta(x.desc,x.val,x.venc,'Pessoal',x.pago));
   (D.cartoesPes||[]).forEach(x=>addAlerta(x.desc,x.val,x.venc,'Cartão pes.',x.pago));
@@ -824,14 +824,14 @@ function renderTabela(arr,tbodyId,totId,campos,onToggle,onEdit,onDel){
   const sorted=sortByDate(arr,campos.dateField||'venc');
   let tot=0;
   const rows=sorted.map(({r,i})=>{
-    if(!r.pago)tot+=(r.val||0);
-    const nome=r.desc||r.nome||'';
+    if(!r.pago)tot+=(r.val||r.total||0);
+    const nome=r.desc||r.nome||r.nome||'';
     const vb=campos.semVenc?'':vencBadge(r[campos.dateField||'venc']||'',r.pago);
     const statusBadge=`<span class="badge ${r.pago?'badge-paid':'badge-pending'}">${r.pago?'Pago':'Pend.'}</span>`;
     return`<tr>
       <td style="width:30px"><input type="checkbox" ${r.pago?'checked':''} onchange="${onToggle}(${i},this.checked)"></td>
       <td title="${nome}">${nome}</td>
-      <td style="text-align:right;width:110px">${brl(r.val)}</td>
+      <td style="text-align:right;width:110px">${brl(r.val||r.total||0)}</td>
       ${campos.semVenc?'':'<td style="text-align:center;width:90px">'+vb+'</td>'}
       <td style="width:70px">${statusBadge}</td>
       <td style="width:60px"><div class="row-actions">
