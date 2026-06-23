@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "build:pages": "node scripts/build-pages.mjs",
+    "build:docs": "node scripts/build-docs.mjs",
     "lint": "oxlint",
     "preview": "vite preview",
     "setup:firebase": "node scripts/setup-firebase.mjs",

@@ -3,12 +3,13 @@ name: Deploy GitHub Pages
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - 'docs/**'
   workflow_dispatch:
 
 permissions:
   contents: write
   pages: write
-  id-token: write
 
 concurrency:
   group: pages
@@ -37,34 +38,36 @@ jobs:
           VITE_FIREBASE_MESSAGING_SENDER_ID: '378029746975'
           VITE_FIREBASE_APP_ID: 1:378029746975:web:e2e8b823843ae17ac91e2a
 
-      - name: Configurar GitHub Pages para branch gh-pages
+      - name: Preparar pasta docs
+        run: |
+          rm -rf docs
+          cp -r dist docs
+          cp docs/index.html docs/404.html
+          touch docs/.nojekyll
+
+      - name: Configurar GitHub Pages (branch main, pasta /docs)
         uses: actions/github-script@v7
         with:
           script: |
             const { owner, repo } = context.repo;
+            const payload = {
+              build_type: 'legacy',
+              source: { branch: 'main', path: '/docs' },
+            };
             try {
-              await github.rest.repos.updateInformationAboutPagesSite({
-                owner,
-                repo,
-                build_type: 'legacy',
-                source: { branch: 'gh-pages', path: '/' },
-              });
+              await github.rest.repos.updateInformationAboutPagesSite({ owner, repo, ...payload });
             } catch (error) {
               if (error.status === 404) {
-                await github.rest.repos.createPagesSite({
-                  owner,
-                  repo,
-                  build_type: 'legacy',
-                  source: { branch: 'gh-pages', path: '/' },
-                });
+                await github.rest.repos.createPagesSite({ owner, repo, ...payload });
               } else {
-                core.info(`Pages config: ${error.message}`);
+                core.warning(`Pages config: ${error.message}`);
               }
             }
 
-      - name: Publicar em gh-pages
-        uses: peaceiris/actions-gh-pages@v4
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./dist
-          force_orphan: true
+      - name: Publicar docs na main
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs
+          git diff --staged --quiet || git commit -m "Deploy GitHub Pages [skip ci]"
+          git push
