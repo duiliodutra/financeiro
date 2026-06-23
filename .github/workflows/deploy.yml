@@ -7,6 +7,8 @@ on:
 
 permissions:
   contents: write
+  pages: write
+  id-token: write
 
 concurrency:
   group: pages
@@ -35,7 +37,32 @@ jobs:
           VITE_FIREBASE_MESSAGING_SENDER_ID: '378029746975'
           VITE_FIREBASE_APP_ID: 1:378029746975:web:e2e8b823843ae17ac91e2a
 
-      - name: Deploy to gh-pages branch
+      - name: Configurar GitHub Pages para branch gh-pages
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            try {
+              await github.rest.repos.updateInformationAboutPagesSite({
+                owner,
+                repo,
+                build_type: 'legacy',
+                source: { branch: 'gh-pages', path: '/' },
+              });
+            } catch (error) {
+              if (error.status === 404) {
+                await github.rest.repos.createPagesSite({
+                  owner,
+                  repo,
+                  build_type: 'legacy',
+                  source: { branch: 'gh-pages', path: '/' },
+                });
+              } else {
+                core.info(`Pages config: ${error.message}`);
+              }
+            }
+
+      - name: Publicar em gh-pages
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
