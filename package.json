@@ -10,6 +10,7 @@
     "lint": "oxlint",
     "preview": "vite preview",
     "setup:firebase": "node scripts/setup-firebase.mjs",
+    "setup:auth-domain": "node scripts/add-auth-domain.mjs",
     "firebase:login": "firebase login",
     "firebase:deploy": "firebase deploy --only firestore"
   },
