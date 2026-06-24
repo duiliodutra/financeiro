@@ -3,7 +3,14 @@ import { homedir } from 'node:os'
 import { join } from 'node:path'
 
 const projectId = 'financeiro-pessoal-cd1c0'
+const projectNumber = '378029746975'
+const oauthClientId = 'financeiro-web'
 const users = ['duiliodudu@gmail.com', 'deysinhalmeida@gmail.com']
+
+const redirectUris = [
+  `https://${projectId}.firebaseapp.com/__/auth/handler`,
+  `https://${projectId}.web.app/__/auth/handler`,
+]
 
 const config = JSON.parse(
   readFileSync(join(homedir(), '.config', 'configstore', 'firebase-tools.json'), 'utf8'),
@@ -52,53 +59,125 @@ async function authFetch(url, options = {}) {
 
 async function parseJson(res) {
   const text = await res.text()
-  return text ? JSON.parse(text) : {}
+  if (!text) return {}
+  try {
+    return JSON.parse(text)
+  } catch {
+    return { _raw: text.slice(0, 300) }
+  }
 }
 
-async function enableGoogleSignIn() {
-  const listRes = await authFetch(
+async function enableApi(serviceName) {
+  const res = await authFetch(
+    `https://serviceusage.googleapis.com/v1/projects/${projectNumber}/services/${serviceName}:enable`,
+    { method: 'POST', body: '{}' },
+  )
+  if (res.ok || res.status === 409) return
+  const body = await parseJson(res)
+  console.warn(`API ${serviceName}:`, body.error?.message ?? res.status)
+}
+
+async function getGoogleIdpConfig() {
+  const res = await authFetch(
     `https://identitytoolkit.googleapis.com/v2/projects/${projectId}/defaultSupportedIdpConfigs`,
   )
-  const list = await parseJson(listRes)
-  const googleConfig = list.defaultSupportedIdpConfigs?.find((c) =>
-    c.name?.endsWith('/google.com'),
-  )
+  const body = await parseJson(res)
+  return body.defaultSupportedIdpConfigs?.find((c) => c.name?.endsWith('/google.com'))
+}
 
-  if (googleConfig?.enabled) {
+async function ensureOAuthClient() {
+  const parent = `projects/${projectNumber}/locations/global`
+  const clientPath = `${parent}/oauthClients/${oauthClientId}`
+
+  let clientRes = await authFetch(`https://iam.googleapis.com/v1/${clientPath}`)
+  let client = await parseJson(clientRes)
+
+  if (!clientRes.ok) {
+    const createRes = await authFetch(`https://iam.googleapis.com/v1/${parent}/oauthClients?oauthClientId=${oauthClientId}`, {
+      method: 'POST',
+      body: JSON.stringify({
+        displayName: 'Financeiro Web',
+        clientType: 'CONFIDENTIAL_CLIENT',
+        allowedGrantTypes: ['AUTHORIZATION_CODE_GRANT'],
+        allowedScopes: ['openid', 'email', 'profile'],
+        allowedRedirectUris: redirectUris,
+      }),
+    })
+    client = await parseJson(createRes)
+    if (!createRes.ok) {
+      throw new Error(`Erro ao criar OAuth client: ${JSON.stringify(client)}`)
+    }
+    console.log('✓ Cliente OAuth criado')
+  } else {
+    console.log('✓ Cliente OAuth já existe')
+  }
+
+  let clientId = client.clientId
+  let clientSecret = client.clientSecret
+
+  if (!clientSecret) {
+    const credRes = await authFetch(
+      `https://iam.googleapis.com/v1/${clientPath}/credentials?oauthClientCredentialId=auth-v2`,
+      { method: 'POST', body: '{}' },
+    )
+    const cred = await parseJson(credRes)
+    if (credRes.ok) {
+      clientSecret = cred.clientSecret
+      console.log('✓ Nova credencial OAuth gerada')
+    } else if (cred.error?.status === 'ALREADY_EXISTS') {
+      const existing = await getGoogleIdpConfig()
+      clientId = existing?.clientId ?? clientId
+      clientSecret = existing?.clientSecret
+      console.log('• Reutilizando credencial já vinculada ao Firebase')
+    } else {
+      throw new Error(`Erro ao gerar credencial OAuth: ${JSON.stringify(cred)}`)
+    }
+  }
+
+  if (!clientId || !clientSecret) {
+    throw new Error('Não foi possível obter clientId/clientSecret do OAuth')
+  }
+
+  return { clientId, clientSecret }
+}
+
+async function enableGoogleSignIn(clientId, clientSecret) {
+  const existing = await getGoogleIdpConfig()
+  if (existing?.enabled && existing.clientId) {
     console.log('✓ Login com Google já estava ativo')
     return
   }
 
-  if (googleConfig) {
+  const payload = {
+    name: `projects/${projectId}/defaultSupportedIdpConfigs/google.com`,
+    enabled: true,
+    clientId,
+    clientSecret,
+  }
+
+  if (existing) {
     const patchRes = await authFetch(
-      `https://identitytoolkit.googleapis.com/v2/${googleConfig.name}?updateMask=enabled`,
-      {
-        method: 'PATCH',
-        body: JSON.stringify({ enabled: true }),
-      },
+      `https://identitytoolkit.googleapis.com/admin/v2/projects/${projectId}/defaultSupportedIdpConfigs/google.com?updateMask=enabled,clientId,clientSecret`,
+      { method: 'PATCH', body: JSON.stringify(payload) },
     )
     const body = await parseJson(patchRes)
     if (patchRes.ok) {
       console.log('✓ Login com Google ativado')
       return
     }
-    console.error('Erro ao ativar Google:', body)
-    return
+    throw new Error(`Erro ao ativar Google: ${JSON.stringify(body)}`)
   }
 
   const createRes = await authFetch(
     `https://identitytoolkit.googleapis.com/v2/projects/${projectId}/defaultSupportedIdpConfigs?idpId=google.com`,
-    {
-      method: 'POST',
-      body: JSON.stringify({ enabled: true }),
-    },
+    { method: 'POST', body: JSON.stringify(payload) },
   )
   const body = await parseJson(createRes)
   if (createRes.ok) {
     console.log('✓ Login com Google ativado')
     return
   }
-  console.error('Erro ao criar config Google:', body)
+  throw new Error(`Erro ao criar Google IDP: ${JSON.stringify(body)}`)
 }
 
 async function disableEmailPassword() {
@@ -122,9 +201,14 @@ async function disableEmailPassword() {
 }
 
 console.log('Configurando autenticação Firebase...\n')
-await enableGoogleSignIn()
+await enableApi('iap.googleapis.com')
+await enableApi('identitytoolkit.googleapis.com')
+
+const { clientId, clientSecret } = await ensureOAuthClient()
+await enableGoogleSignIn(clientId, clientSecret)
 await disableEmailPassword()
-console.log('\nAcesso permitido apenas com Google para:')
+
+console.log('\nAcesso permitido com Google para:')
 for (const email of users) {
   console.log(`  • ${email}`)
 }

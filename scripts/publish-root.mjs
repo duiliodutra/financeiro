@@ -1,4 +1,4 @@
-import { cpSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { cpSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { execSync } from 'node:child_process'
 
 const devIndex = `<!doctype html>
@@ -16,23 +16,28 @@ const devIndex = `<!doctype html>
 </html>
 `
 
+function publishTo(targetDir) {
+  mkdirSync(targetDir, { recursive: true })
+  for (const file of ['index.html', 'favicon.svg', 'icons.svg']) {
+    cpSync(`dist/${file}`, `${targetDir}/${file}`)
+  }
+  rmSync(`${targetDir}/assets`, { recursive: true, force: true })
+  cpSync('dist/assets', `${targetDir}/assets`, { recursive: true })
+  writeFileSync(`${targetDir}/.nojekyll`, '')
+  const index = readFileSync(`${targetDir}/index.html`, 'utf8')
+  writeFileSync(`${targetDir}/404.html`, index)
+}
+
 writeFileSync('index.html', devIndex)
 process.env.GITHUB_PAGES = 'true'
 execSync('npm run build', { stdio: 'inherit', env: process.env })
 
-const files = ['index.html', 'favicon.svg', 'icons.svg']
-for (const file of files) {
-  cpSync(`dist/${file}`, file)
-}
-
-rmSync('assets', { recursive: true, force: true })
-cpSync('dist/assets', 'assets', { recursive: true })
+publishTo('.')
+publishTo('docs')
 
 writeFileSync('.nojekyll', '')
-const index = readFileSync('index.html', 'utf8')
-writeFileSync('404.html', index)
 if (!process.env.CI) {
   writeFileSync('index.html', devIndex)
 }
 
-console.log('Build publicado na raiz do repositório')
+console.log('Build publicado na raiz e em docs/')
