@@ -1,3 +1,8 @@
+export function periodFromDate(iso: string): { year: number; month: number } {
+  const [year, month] = iso.split('-').map(Number)
+  return { year, month }
+}
+
 export function formatCurrency(value: number): string {
   return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 }

@@ -12,7 +12,7 @@ const statusStyles = {
 interface Props {
   entries: Entry[]
   onEdit: (entry: Entry) => void
-  onDelete: (id: string) => void
+  onDelete: (entry: Entry) => void
   onPay: (entry: Entry) => void
   onPartialPay: (entry: Entry) => void
   onReopen: (entry: Entry) => void
@@ -36,7 +36,7 @@ export function EntryTable({
 
   return (
     <div className="overflow-x-auto">
-      <table className="w-full text-sm">
+      <table className="w-full min-w-[640px] text-sm">
         <thead>
           <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-500">
             <th className="px-3 py-3">Tipo</th>
@@ -51,7 +51,11 @@ export function EntryTable({
           {entries.map((entry) => {
             const remaining = entryRemaining(entry)
             return (
-              <tr key={entry.id} className="border-b border-slate-100 hover:bg-slate-50">
+              <tr
+                key={entry.id}
+                className="cursor-pointer border-b border-slate-100 hover:bg-slate-50"
+                onClick={() => onEdit(entry)}
+              >
                 <td className="px-3 py-3">
                   <span
                     className={`rounded-full px-2 py-0.5 text-xs font-medium ${
@@ -79,7 +83,10 @@ export function EntryTable({
                   </span>
                 </td>
                 <td className="px-3 py-3">
-                  <div className="flex items-center justify-end gap-1">
+                  <div
+                    className="flex flex-wrap items-center justify-end gap-1"
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     {entry.status !== 'pago' && (
                       <>
                         <button
@@ -112,16 +119,20 @@ export function EntryTable({
                     <button
                       type="button"
                       onClick={() => onEdit(entry)}
-                      className="rounded p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+                      className="flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-blue-700 hover:bg-blue-50"
+                      title="Editar"
                     >
                       <Pencil size={14} />
+                      Editar
                     </button>
                     <button
                       type="button"
-                      onClick={() => onDelete(entry.id)}
-                      className="rounded p-1.5 text-red-400 hover:bg-red-50 hover:text-red-600"
+                      onClick={() => onDelete(entry)}
+                      className="flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-50"
+                      title="Excluir"
                     >
                       <Trash2 size={14} />
+                      Excluir
                     </button>
                   </div>
                 </td>

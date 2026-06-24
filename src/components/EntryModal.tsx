@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { X } from 'lucide-react'
 import type { Entry, EntryType } from '../lib/types'
 
@@ -11,7 +11,7 @@ interface Props {
     date: string
     amount: number
     paidAmount: number
-  }) => void
+  }) => Promise<void>
   onClose: () => void
 }
 
@@ -19,22 +19,44 @@ export function EntryModal({ entry, defaultType, onSave, onClose }: Props) {
   const [type, setType] = useState<EntryType>(entry?.type ?? defaultType)
   const [description, setDescription] = useState(entry?.description ?? '')
   const [date, setDate] = useState(entry?.date ?? new Date().toISOString().slice(0, 10))
-  const [amount, setAmount] = useState(String(entry?.amount ?? ''))
-  const [paidAmount, setPaidAmount] = useState(String(entry?.paidAmount ?? '0'))
+  const [amount, setAmount] = useState(entry?.amount != null ? String(entry.amount) : '')
+  const [paidAmount, setPaidAmount] = useState(
+    entry?.paidAmount != null ? String(entry.paidAmount) : '0',
+  )
+  const [error, setError] = useState('')
+  const [saving, setSaving] = useState(false)
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    setType(entry?.type ?? defaultType)
+    setDescription(entry?.description ?? '')
+    setDate(entry?.date ?? new Date().toISOString().slice(0, 10))
+    setAmount(entry?.amount != null ? String(entry.amount) : '')
+    setPaidAmount(entry?.paidAmount != null ? String(entry.paidAmount) : '0')
+    setError('')
+  }, [entry, defaultType])
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     const amt = parseFloat(amount.replace(',', '.')) || 0
     const paid = parseFloat(paidAmount.replace(',', '.')) || 0
     if (!description.trim() || amt <= 0) return
-    onSave({
-      type,
-      description: description.trim(),
-      date,
-      amount: amt,
-      paidAmount: Math.min(paid, amt),
-    })
-    onClose()
+
+    setSaving(true)
+    setError('')
+    try {
+      await onSave({
+        type,
+        description: description.trim(),
+        date,
+        amount: amt,
+        paidAmount: Math.min(paid, amt),
+      })
+      onClose()
+    } catch {
+      setError('Não foi possível salvar. Tente novamente.')
+    } finally {
+      setSaving(false)
+    }
   }
 
   return (
@@ -111,6 +133,8 @@ export function EntryModal({ entry, defaultType, onSave, onClose }: Props) {
           </div>
         </div>
 
+        {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
+
         <div className="mt-6 flex justify-end gap-2">
           <button
             type="button"
@@ -121,9 +145,10 @@ export function EntryModal({ entry, defaultType, onSave, onClose }: Props) {
           </button>
           <button
             type="submit"
-            className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+            disabled={saving}
+            className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
           >
-            Salvar
+            {saving ? 'Salvando...' : 'Salvar'}
           </button>
         </div>
       </form>

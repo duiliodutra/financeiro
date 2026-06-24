@@ -11,9 +11,9 @@ interface Props {
   entries: Entry[]
   onEditBlock: (block: Block) => void
   onDeleteBlock: (id: string) => void
-  onAddEntry: (data: Omit<Entry, 'id' | 'createdAt' | 'status' | 'blockId' | 'month' | 'year'>) => void
-  onUpdateEntry: (id: string, data: Partial<Entry>) => void
-  onDeleteEntry: (id: string) => void
+  onAddEntry: (data: Omit<Entry, 'id' | 'createdAt' | 'status' | 'blockId' | 'month' | 'year'>) => Promise<void>
+  onUpdateEntry: (id: string, data: Partial<Entry>) => Promise<void>
+  onDeleteEntry: (id: string) => Promise<void>
   onPayEntry: (entry: Entry, amount?: number) => void
   onReopenEntry: (entry: Entry) => void
 }
@@ -77,9 +77,11 @@ export function BlockPanel({
             <button
               type="button"
               onClick={() => onEditBlock(block)}
-              className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+              className="flex items-center gap-1 rounded-lg px-2 py-1.5 text-xs font-medium text-blue-700 hover:bg-blue-50"
+              title="Editar bloco"
             >
               <Pencil size={16} />
+              Editar
             </button>
             <button
               type="button"
@@ -88,9 +90,11 @@ export function BlockPanel({
                   onDeleteBlock(block.id)
                 }
               }}
-              className="rounded-lg p-2 text-red-400 hover:bg-red-50 hover:text-red-600"
+              className="flex items-center gap-1 rounded-lg px-2 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50"
+              title="Excluir bloco"
             >
               <Trash2 size={16} />
+              Excluir
             </button>
           </div>
         </div>
@@ -99,7 +103,11 @@ export function BlockPanel({
       <EntryTable
         entries={blockEntries}
         onEdit={(entry) => setEntryModal({ entry, type: entry.type })}
-        onDelete={onDeleteEntry}
+        onDelete={(entry) => {
+          if (confirm(`Excluir "${entry.description}"?`)) {
+            onDeleteEntry(entry.id)
+          }
+        }}
         onPay={(entry) => onPayEntry(entry)}
         onPartialPay={(entry) => {
           setPartialEntry(entry)
@@ -110,14 +118,15 @@ export function BlockPanel({
 
       {entryModal && (
         <EntryModal
+          key={entryModal.entry?.id ?? `new-${entryModal.type}`}
           entry={entryModal.entry}
           defaultType={entryModal.type ?? defaultType}
           onClose={() => setEntryModal(null)}
-          onSave={(data) => {
+          onSave={async (data) => {
             if (entryModal.entry) {
-              onUpdateEntry(entryModal.entry.id, data)
+              await onUpdateEntry(entryModal.entry.id, data)
             } else {
-              onAddEntry(data)
+              await onAddEntry(data)
             }
           }}
         />

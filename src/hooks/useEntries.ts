@@ -12,6 +12,7 @@ import {
   where,
 } from 'firebase/firestore'
 import { deriveStatus } from '../lib/calculations'
+import { periodFromDate } from '../lib/format'
 import { db } from '../lib/firebase'
 import type { Entry } from '../lib/types'
 import { useAuth } from './useAuth'
@@ -42,11 +43,14 @@ export function useEntries(year: number, month: number) {
     })
   }, [user, year, month])
 
-  const addEntry = async (data: Omit<Entry, 'id' | 'createdAt' | 'status'>) => {
-    if (!db || !user) return
+  const addEntry = async (data: Omit<Entry, 'id' | 'createdAt' | 'status' | 'month' | 'year'>) => {
+    if (!db || !user) throw new Error('Não autenticado')
+    const { year, month } = periodFromDate(data.date)
     const status = deriveStatus(data.amount, data.paidAmount)
     await addDoc(collection(db, 'entries'), {
       ...data,
+      year,
+      month,
       status,
       userId: user.uid,
       createdAt: new Date().toISOString(),
@@ -54,8 +58,13 @@ export function useEntries(year: number, month: number) {
   }
 
   const updateEntry = async (id: string, data: Partial<Entry>) => {
-    if (!db) return
+    if (!db) throw new Error('Firestore indisponível')
     const patch = { ...data }
+    if (patch.date) {
+      const { year, month } = periodFromDate(patch.date)
+      patch.year = year
+      patch.month = month
+    }
     if (patch.amount !== undefined || patch.paidAmount !== undefined) {
       const current = entries.find((e) => e.id === id)
       if (current) {
@@ -68,7 +77,7 @@ export function useEntries(year: number, month: number) {
   }
 
   const removeEntry = async (id: string) => {
-    if (!db) return
+    if (!db) throw new Error('Firestore indisponível')
     await deleteDoc(doc(db, 'entries', id))
   }
 

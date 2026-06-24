@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
 import {
+  GoogleAuthProvider,
   onAuthStateChanged,
   signInWithEmailAndPassword,
+  signInWithPopup,
   signOut,
   type User,
 } from 'firebase/auth'
@@ -27,10 +29,15 @@ export function useAuth() {
     return signInWithEmailAndPassword(auth, email, password)
   }
 
+  const loginWithGoogle = () => {
+    if (!auth) throw new Error('Firebase não configurado')
+    return signInWithPopup(auth, new GoogleAuthProvider())
+  }
+
   const logout = () => {
     if (!auth) return Promise.resolve()
     return signOut(auth)
   }
 
-  return { user, loading, login, logout }
+  return { user, loading, login, loginWithGoogle, logout }
 }

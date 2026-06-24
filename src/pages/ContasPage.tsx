@@ -47,7 +47,6 @@ export function ContasPage() {
       const order = blocks.length > 0 ? Math.max(...blocks.map((b) => b.order)) + 1 : 0
       await addBlock({ ...data, order })
     }
-    setBlockModal(null)
   }
 
   return (
@@ -111,9 +110,7 @@ export function ContasPage() {
                 entries={entries}
                 onEditBlock={(b) => setBlockModal(b)}
                 onDeleteBlock={handleDeleteBlock}
-                onAddEntry={(data) =>
-                  addEntry({ ...data, blockId: activeBlock.id, month, year })
-                }
+                onAddEntry={(data) => addEntry({ ...data, blockId: activeBlock.id })}
                 onUpdateEntry={updateEntry}
                 onDeleteEntry={removeEntry}
                 onPayEntry={payEntry}
@@ -126,6 +123,7 @@ export function ContasPage() {
 
       {blockModal && (
         <BlockModal
+          key={blockModal === 'new' ? 'new' : blockModal.id}
           block={blockModal === 'new' ? undefined : blockModal}
           onClose={() => setBlockModal(null)}
           onSave={handleAddBlock}

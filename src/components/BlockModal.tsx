@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Plus, X } from 'lucide-react'
 import type { Block, BlockKind } from '../lib/types'
 
@@ -11,19 +11,36 @@ const kindOptions: { value: BlockKind; label: string }[] = [
 
 interface Props {
   block?: Block
-  onSave: (data: { name: string; kind: BlockKind }) => void
+  onSave: (data: { name: string; kind: BlockKind }) => Promise<void>
   onClose: () => void
 }
 
 export function BlockModal({ block, onSave, onClose }: Props) {
   const [name, setName] = useState(block?.name ?? '')
   const [kind, setKind] = useState<BlockKind>(block?.kind ?? 'despesa')
+  const [error, setError] = useState('')
+  const [saving, setSaving] = useState(false)
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    setName(block?.name ?? '')
+    setKind(block?.kind ?? 'despesa')
+    setError('')
+  }, [block])
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!name.trim()) return
-    onSave({ name: name.trim(), kind })
-    onClose()
+
+    setSaving(true)
+    setError('')
+    try {
+      await onSave({ name: name.trim(), kind })
+      onClose()
+    } catch {
+      setError('Não foi possível salvar. Tente novamente.')
+    } finally {
+      setSaving(false)
+    }
   }
 
   return (
@@ -62,6 +79,8 @@ export function BlockModal({ block, onSave, onClose }: Props) {
           ))}
         </select>
 
+        {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
+
         <div className="mt-6 flex justify-end gap-2">
           <button
             type="button"
@@ -72,10 +91,11 @@ export function BlockModal({ block, onSave, onClose }: Props) {
           </button>
           <button
             type="submit"
-            className="flex items-center gap-1 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+            disabled={saving}
+            className="flex items-center gap-1 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
           >
             <Plus size={16} />
-            Salvar
+            {saving ? 'Salvando...' : 'Salvar'}
           </button>
         </div>
       </form>
