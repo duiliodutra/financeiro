@@ -17,42 +17,44 @@ export function blockTotals(entries: Entry[]) {
   return { paid, open, total }
 }
 
+function sumByBlockKind(
+  entries: Entry[],
+  blocks: Block[],
+  kinds: Block['kind'][],
+  field: 'open' | 'paid',
+) {
+  const blockIds = new Set(blocks.filter((b) => kinds.includes(b.kind)).map((b) => b.id))
+  return entries
+    .filter((e) => blockIds.has(e.blockId))
+    .reduce((s, e) => s + (field === 'open' ? entryRemaining(e) : e.paidAmount), 0)
+}
+
 export function summaryFromEntries(entries: Entry[], blocks: Block[]) {
-  const expenses = entries.filter((e) => e.type === 'despesa')
-  const incomes = entries.filter((e) => e.type === 'receita')
+  const despesaOpen = sumByBlockKind(entries, blocks, ['despesa'], 'open')
+  const receitaOpen = sumByBlockKind(entries, blocks, ['receita'], 'open')
+  const devoOpen = sumByBlockKind(entries, blocks, ['devo'], 'open')
+  const meDevemOpen = sumByBlockKind(entries, blocks, ['me_devem'], 'open')
 
-  const expensePaid = expenses.reduce((s, e) => s + e.paidAmount, 0)
-  const expenseOpen = expenses.reduce((s, e) => s + entryRemaining(e), 0)
-  const incomePaid = incomes.reduce((s, e) => s + e.paidAmount, 0)
-  const incomeOpen = incomes.reduce((s, e) => s + entryRemaining(e), 0)
+  const despesaPaid = sumByBlockKind(entries, blocks, ['despesa'], 'paid')
+  const receitaPaid = sumByBlockKind(entries, blocks, ['receita'], 'paid')
+  const devoPaid = sumByBlockKind(entries, blocks, ['devo'], 'paid')
+  const meDevemPaid = sumByBlockKind(entries, blocks, ['me_devem'], 'paid')
 
-  const devoBlocks = blocks.filter((b) => b.kind === 'devo')
-  const meDevemBlocks = blocks.filter((b) => b.kind === 'me_devem')
-
-  const devoOpen = entries
-    .filter((e) => devoBlocks.some((b) => b.id === e.blockId))
-    .reduce((s, e) => s + entryRemaining(e), 0)
-
-  const meDevemOpen = entries
-    .filter((e) => meDevemBlocks.some((b) => b.id === e.blockId))
-    .reduce((s, e) => s + entryRemaining(e), 0)
-
-  const totalOpen = expenseOpen + devoOpen - incomeOpen - meDevemOpen
-  const totalPaid = expensePaid + incomePaid
-  const grandTotal = entries.reduce((s, e) => s + e.amount, 0)
+  // Cada lançamento entra uma vez, pelo tipo do bloco
+  const totalOpen = despesaOpen + devoOpen - receitaOpen - meDevemOpen
+  const totalPaid = despesaPaid + devoPaid + receitaPaid + meDevemPaid
+  const personalBalance = receitaPaid + meDevemPaid - despesaPaid - devoPaid
 
   return {
-    expensePaid,
-    expenseOpen,
-    incomePaid,
-    incomeOpen,
+    expensePaid: despesaPaid,
+    expenseOpen: despesaOpen,
+    incomePaid: receitaPaid,
+    incomeOpen: receitaOpen,
     devoOpen,
     meDevemOpen,
     totalOpen,
     totalPaid,
-    grandTotal,
-    personalBalance: incomePaid - expensePaid,
-    netOpen: incomeOpen - expenseOpen,
+    personalBalance,
   }
 }
 

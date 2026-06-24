@@ -32,12 +32,17 @@ export function SummaryCards({
   closingForecast: number
 }) {
   const cards: CardProps[] = [
-    { label: 'Saldo Pessoal', value: personalBalance, color: 'purple' },
+    { label: 'Saldo Pessoal', value: personalBalance, color: 'purple', subtitle: 'recebido − pago no mês' },
     { label: 'Eu Devo', value: devoOpen, color: 'red', subtitle: 'em aberto' },
     { label: 'Me Devem', value: meDevemOpen, color: 'green', subtitle: 'a receber' },
-    { label: 'Quitado / Recebido', value: totalPaid, color: 'green' },
-    { label: 'Saldo em Aberto', value: totalOpen, color: 'red' },
-    { label: 'Prev. de Fechamento', value: closingForecast, color: 'emerald' },
+    { label: 'Quitado / Recebido', value: totalPaid, color: 'green', subtitle: 'já pago ou recebido' },
+    { label: 'Saldo em Aberto', value: totalOpen, color: totalOpen >= 0 ? 'red' : 'green', subtitle: 'a pagar − a receber' },
+    {
+      label: 'Prev. de Fechamento',
+      value: closingForecast,
+      color: closingForecast >= 0 ? 'emerald' : 'red',
+      subtitle: 'caixa + recebimentos − aberto',
+    },
   ]
 
   return (
