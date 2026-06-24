@@ -4,6 +4,7 @@ import { forecastId } from '../lib/format'
 import { db } from '../lib/firebase'
 import type { Forecast } from '../lib/types'
 import { useAuth } from './useAuth'
+import { getFirestoreUserId } from '../lib/allowedUsers'
 
 const emptyForecast = (year: number, month: number): Forecast => ({
   id: forecastId(year, month),
@@ -26,8 +27,9 @@ export function useForecast(year: number, month: number) {
       return
     }
 
+    const dataUserId = getFirestoreUserId(user)
     const id = forecastId(year, month)
-    const ref = doc(db, 'forecasts', `${user.uid}_${id}`)
+    const ref = doc(db, 'forecasts', `${dataUserId}_${id}`)
 
     return onSnapshot(ref, (snap) => {
       if (snap.exists()) {
@@ -41,9 +43,10 @@ export function useForecast(year: number, month: number) {
 
   const saveForecast = async (data: Partial<Forecast>) => {
     if (!db || !user) return
+    const dataUserId = getFirestoreUserId(user)
     const id = forecastId(year, month)
-    const ref = doc(db, 'forecasts', `${user.uid}_${id}`)
-    await setDoc(ref, { ...emptyForecast(year, month), ...forecast, ...data, userId: user.uid }, { merge: true })
+    const ref = doc(db, 'forecasts', `${dataUserId}_${id}`)
+    await setDoc(ref, { ...emptyForecast(year, month), ...forecast, ...data, userId: dataUserId }, { merge: true })
   }
 
   return { forecast, loading, saveForecast }

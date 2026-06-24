@@ -13,6 +13,7 @@ import {
 import { db } from '../lib/firebase'
 import type { Block } from '../lib/types'
 import { useAuth } from './useAuth'
+import { getFirestoreUserId } from '../lib/allowedUsers'
 
 export function useBlocks() {
   const { user } = useAuth()
@@ -26,9 +27,10 @@ export function useBlocks() {
       return
     }
 
+    const dataUserId = getFirestoreUserId(user)
     const q = query(
       collection(db, 'blocks'),
-      where('userId', '==', user.uid),
+      where('userId', '==', dataUserId),
       orderBy('order', 'asc'),
     )
 
@@ -40,9 +42,10 @@ export function useBlocks() {
 
   const addBlock = async (data: Omit<Block, 'id' | 'createdAt'>) => {
     if (!db || !user) return
+    const dataUserId = getFirestoreUserId(user)
     await addDoc(collection(db, 'blocks'), {
       ...data,
-      userId: user.uid,
+      userId: dataUserId,
       createdAt: new Date().toISOString(),
     })
   }

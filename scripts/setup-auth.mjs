@@ -1,10 +1,9 @@
-import { readFileSync, writeFileSync } from 'node:fs'
+import { readFileSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
 
 const projectId = 'financeiro-pessoal-cd1c0'
 const users = ['duiliodudu@gmail.com', 'deysinhalmeida@gmail.com']
-const tempPassword = 'FinanceiroDeyse2026!'
 
 const config = JSON.parse(
   readFileSync(join(homedir(), '.config', 'configstore', 'firebase-tools.json'), 'utf8'),
@@ -56,31 +55,6 @@ async function parseJson(res) {
   return text ? JSON.parse(text) : {}
 }
 
-async function createUser(email) {
-  const res = await authFetch(
-    `https://identitytoolkit.googleapis.com/v1/projects/${projectId}/accounts`,
-    {
-      method: 'POST',
-      body: JSON.stringify({
-        email,
-        password: tempPassword,
-        emailVerified: true,
-        disabled: false,
-      }),
-    },
-  )
-  const body = await parseJson(res)
-  if (res.ok) {
-    console.log(`✓ Usuário criado: ${email}`)
-    return
-  }
-  if (body.error?.message?.includes('EMAIL_EXISTS')) {
-    console.log(`• Usuário já existe: ${email}`)
-    return
-  }
-  console.error(`✗ Erro ao criar ${email}:`, body.error?.message ?? body)
-}
-
 async function enableGoogleSignIn() {
   const listRes = await authFetch(
     `https://identitytoolkit.googleapis.com/v2/projects/${projectId}/defaultSupportedIdpConfigs`,
@@ -127,37 +101,30 @@ async function enableGoogleSignIn() {
   console.error('Erro ao criar config Google:', body)
 }
 
-async function enableEmailPassword() {
+async function disableEmailPassword() {
   const res = await authFetch(
     `https://identitytoolkit.googleapis.com/admin/v2/projects/${projectId}/config?updateMask=signIn.email.enabled,signIn.email.passwordRequired`,
     {
       method: 'PATCH',
       body: JSON.stringify({
         signIn: {
-          email: { enabled: true, passwordRequired: true },
+          email: { enabled: false, passwordRequired: false },
         },
       }),
     },
   )
   if (res.ok) {
-    console.log('✓ Login com e-mail/senha confirmado')
+    console.log('✓ Login com e-mail/senha desativado')
     return
   }
   const body = await parseJson(res)
-  console.error('Erro ao configurar e-mail/senha:', body)
+  console.error('Erro ao desativar e-mail/senha:', body)
 }
 
 console.log('Configurando autenticação Firebase...\n')
-await enableEmailPassword()
 await enableGoogleSignIn()
+await disableEmailPassword()
+console.log('\nAcesso permitido apenas com Google para:')
 for (const email of users) {
-  await createUser(email)
+  console.log(`  • ${email}`)
 }
-
-const credsFile = join(process.cwd(), '.auth-setup.txt')
-writeFileSync(
-  credsFile,
-  `Senha inicial para ambos os usuários: ${tempPassword}\n\nAltere após o primeiro acesso.\n`,
-)
-console.log(`\nSenha inicial: ${tempPassword}`)
-console.log('(salva também em .auth-setup.txt — não vai para o GitHub)')

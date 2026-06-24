@@ -1,14 +1,9 @@
-import { useState } from 'react'
 import { LogOut } from 'lucide-react'
 import { isFirebaseConfigured } from '../lib/firebase'
 import { useAuth } from '../hooks/useAuth'
 
 export function AuthGate({ children }: { children: React.ReactNode }) {
-  const { user, loading, login, loginWithGoogle, logout } = useAuth()
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
-  const [submitting, setSubmitting] = useState(false)
+  const { user, loading, authError, loginWithGoogle, logout } = useAuth()
 
   if (!isFirebaseConfigured) {
     return (
@@ -34,81 +29,31 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
   }
 
   if (!user) {
-    const handleSubmit = async (e: React.FormEvent) => {
-      e.preventDefault()
-      setError('')
-      setSubmitting(true)
-      try {
-        await login(email, password)
-      } catch {
-        setError('E-mail ou senha inválidos.')
-      } finally {
-        setSubmitting(false)
-      }
-    }
-
     const handleGoogle = async () => {
-      setError('')
-      setSubmitting(true)
       try {
         await loginWithGoogle()
       } catch {
-        setError('Não foi possível entrar com Google.')
-      } finally {
-        setSubmitting(false)
+        // redirect errors surface via authError on return
       }
     }
 
     return (
       <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-50 to-blue-50 p-6">
-        <form
-          onSubmit={handleSubmit}
-          className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-8 shadow-lg"
-        >
+        <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-8 shadow-lg">
           <h1 className="text-2xl font-bold text-slate-800">Financeiro Deyse</h1>
           <p className="mt-1 text-sm text-slate-500">Controle pessoal de contas</p>
+          <p className="mt-4 text-sm text-slate-600">
+            Entre com sua conta Google autorizada.
+          </p>
 
-          <label className="mt-6 block text-sm font-medium text-slate-700">E-mail</label>
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
-            required
-          />
-
-          <label className="mt-4 block text-sm font-medium text-slate-700">Senha</label>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
-            required
-          />
-
-          {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
-
-          <button
-            type="submit"
-            disabled={submitting}
-            className="mt-6 w-full rounded-lg bg-blue-600 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
-          >
-            {submitting ? 'Entrando...' : 'Entrar'}
-          </button>
-
-          <div className="my-4 flex items-center gap-3">
-            <div className="h-px flex-1 bg-slate-200" />
-            <span className="text-xs text-slate-400">ou</span>
-            <div className="h-px flex-1 bg-slate-200" />
-          </div>
+          {authError && <p className="mt-4 text-sm text-red-600">{authError}</p>}
 
           <button
             type="button"
             onClick={handleGoogle}
-            disabled={submitting}
-            className="flex w-full items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+            className="mt-6 flex w-full items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white py-3 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50"
           >
-            <svg className="h-4 w-4" viewBox="0 0 24 24" aria-hidden>
+            <svg className="h-5 w-5" viewBox="0 0 24 24" aria-hidden>
               <path
                 fill="#4285F4"
                 d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -128,7 +73,7 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
             </svg>
             Entrar com Google
           </button>
-        </form>
+        </div>
       </div>
     )
   }
@@ -142,7 +87,7 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
         className="fixed bottom-4 right-4 flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-xs text-slate-600 shadow-md hover:bg-slate-50"
       >
         <LogOut size={14} />
-        Sair
+        Sair ({user.email})
       </button>
     </>
   )

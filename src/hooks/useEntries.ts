@@ -16,6 +16,7 @@ import { periodFromDate } from '../lib/format'
 import { db } from '../lib/firebase'
 import type { Entry } from '../lib/types'
 import { useAuth } from './useAuth'
+import { getFirestoreUserId } from '../lib/allowedUsers'
 
 export function useEntries(year: number, month: number) {
   const { user } = useAuth()
@@ -29,9 +30,10 @@ export function useEntries(year: number, month: number) {
       return
     }
 
+    const dataUserId = getFirestoreUserId(user)
     const q = query(
       collection(db, 'entries'),
-      where('userId', '==', user.uid),
+      where('userId', '==', dataUserId),
       where('year', '==', year),
       where('month', '==', month),
       orderBy('date', 'desc'),
@@ -47,12 +49,13 @@ export function useEntries(year: number, month: number) {
     if (!db || !user) throw new Error('Não autenticado')
     const { year, month } = periodFromDate(data.date)
     const status = deriveStatus(data.amount, data.paidAmount)
+    const dataUserId = getFirestoreUserId(user)
     await addDoc(collection(db, 'entries'), {
       ...data,
       year,
       month,
       status,
-      userId: user.uid,
+      userId: dataUserId,
       createdAt: new Date().toISOString(),
     })
   }
@@ -92,9 +95,10 @@ export function useEntries(year: number, month: number) {
 
   const deleteEntriesByBlock = async (blockId: string) => {
     if (!db || !user) return
+    const dataUserId = getFirestoreUserId(user)
     const q = query(
       collection(db, 'entries'),
-      where('userId', '==', user.uid),
+      where('userId', '==', dataUserId),
       where('blockId', '==', blockId),
     )
     const snap = await getDocs(q)

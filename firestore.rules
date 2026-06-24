@@ -1,15 +1,25 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    function isAllowedUser() {
+      return request.auth != null && (
+        request.auth.token.email == 'duiliodudu@gmail.com' ||
+        request.auth.token.email == 'deysinhalmeida@gmail.com'
+      );
+    }
+
+    function sharedUserId() {
+      return 'financeiro-deyse';
+    }
+
     function isOwner() {
-      return request.auth != null && request.auth.uid == resource.data.userId;
+      return isAllowedUser() && resource.data.userId == sharedUserId();
     }
 
     function isOwnerOnCreate() {
-      return request.auth != null && request.auth.uid == request.resource.data.userId;
+      return isAllowedUser() && request.resource.data.userId == sharedUserId();
     }
 
-    // App novo (React)
     match /blocks/{blockId} {
       allow read, update, delete: if isOwner();
       allow create: if isOwnerOnCreate();
@@ -25,9 +35,8 @@ service cloud.firestore {
       allow create: if isOwnerOnCreate();
     }
 
-    // App antigo (HTML) — mantém compatibilidade
     match /usuarios/{userId}/{document=**} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read, write: if isAllowedUser() && request.auth.uid == userId;
     }
   }
 }
