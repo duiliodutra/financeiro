@@ -1,9 +1,9 @@
 import { LogOut } from 'lucide-react'
+import { useAuth } from '../context/AuthContext'
 import { isFirebaseConfigured } from '../lib/firebase'
-import { useAuth } from '../hooks/useAuth'
 
 export function AuthGate({ children }: { children: React.ReactNode }) {
-  const { user, loading, authError, loginWithGoogle, logout } = useAuth()
+  const { user, loading, signingIn, authError, loginWithGoogle, logout } = useAuth()
 
   if (!isFirebaseConfigured) {
     return (
@@ -29,29 +29,22 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
   }
 
   if (!user) {
-    const handleGoogle = async () => {
-      try {
-        await loginWithGoogle()
-      } catch {
-        // redirect errors surface via authError on return
-      }
-    }
-
     return (
       <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-50 to-blue-50 p-6">
         <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-8 shadow-lg">
           <h1 className="text-2xl font-bold text-slate-800">Financeiro Deyse</h1>
           <p className="mt-1 text-sm text-slate-500">Controle pessoal de contas</p>
           <p className="mt-4 text-sm text-slate-600">
-            Entre com sua conta Google autorizada.
+            Escolha a conta Google autorizada (sua ou da Deyse).
           </p>
 
           {authError && <p className="mt-4 text-sm text-red-600">{authError}</p>}
 
           <button
             type="button"
-            onClick={handleGoogle}
-            className="mt-6 flex w-full items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white py-3 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50"
+            onClick={() => loginWithGoogle()}
+            disabled={signingIn}
+            className="mt-6 flex w-full items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white py-3 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50 disabled:opacity-60"
           >
             <svg className="h-5 w-5" viewBox="0 0 24 24" aria-hidden>
               <path
@@ -71,7 +64,7 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
                 d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
               />
             </svg>
-            Entrar com Google
+            {signingIn ? 'Abrindo Google...' : 'Escolher conta Google'}
           </button>
         </div>
       </div>
@@ -84,10 +77,10 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
       <button
         type="button"
         onClick={() => logout()}
-        className="fixed bottom-4 right-4 flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-xs text-slate-600 shadow-md hover:bg-slate-50"
+        className="fixed bottom-4 right-4 z-50 flex max-w-[min(100vw-2rem,20rem)] items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-xs text-slate-600 shadow-md hover:bg-slate-50"
       >
         <LogOut size={14} />
-        Sair ({user.email})
+        <span className="truncate">Sair ({user.email})</span>
       </button>
     </>
   )
