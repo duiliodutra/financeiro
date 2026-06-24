@@ -8,7 +8,6 @@ import {
   openByBlock,
   summaryFromEntries,
 } from '../lib/calculations'
-import type { Block } from '../lib/types'
 import { CashForecast } from '../components/CashForecast'
 import { OpenAccountsList } from '../components/OpenAccountsList'
 import { SummaryCards } from '../components/SummaryCards'
@@ -19,26 +18,22 @@ export function DashboardPage() {
   const { entries } = useEntries(year, month)
   const { forecast, saveForecast } = useForecast(year, month)
 
-  const summary = useMemo(() => summaryFromEntries(entries, blocks), [entries, blocks])
+  const summary = useMemo(() => summaryFromEntries(entries), [entries])
   const forecastValue = useMemo(
     () => closingForecast(forecast, summary),
     [forecast, summary],
   )
 
-  const openGroups = useMemo(() => {
-    const kinds: Block['kind'][] = ['despesa', 'receita', 'devo', 'me_devem']
-    return kinds
-      .map((kind) => {
-        const kindBlocks = blocks.filter((b) => b.kind === kind)
-        const items = openByBlock(entries, kindBlocks).map(({ block, open }) => ({
-          name: block.name,
-          open,
-        }))
-        const subtotal = items.reduce((s, i) => s + i.open, 0)
-        return { kind, items, subtotal }
-      })
-      .filter((g) => g.subtotal > 0)
-  }, [blocks, entries])
+  const openItems = useMemo(
+    () =>
+      openByBlock(entries, blocks).map(({ block, despesaOpen, receitaOpen, netOpen }) => ({
+        name: block.name,
+        despesaOpen,
+        receitaOpen,
+        netOpen,
+      })),
+    [blocks, entries],
+  )
 
   return (
     <div>
@@ -46,12 +41,12 @@ export function DashboardPage() {
         personalBalance={summary.personalBalance}
         totalPaid={summary.totalPaid}
         totalOpen={summary.totalOpen}
-        devoOpen={summary.devoOpen}
-        meDevemOpen={summary.meDevemOpen}
+        expenseOpen={summary.expenseOpen}
+        incomeOpen={summary.incomeOpen}
         closingForecast={forecastValue}
       />
       <CashForecast forecast={forecast} onSave={saveForecast} />
-      <OpenAccountsList groups={openGroups} />
+      <OpenAccountsList items={openItems} />
     </div>
   )
 }

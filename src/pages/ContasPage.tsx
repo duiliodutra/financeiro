@@ -40,12 +40,12 @@ export function ContasPage() {
     await removeBlock(blockId)
   }
 
-  const handleAddBlock = async (data: { name: string; kind: Block['kind'] }) => {
+  const handleAddBlock = async (data: { name: string }) => {
     if (blockModal && blockModal !== 'new') {
-      await updateBlock(blockModal.id, data)
+      await updateBlock(blockModal.id, { name: data.name })
     } else {
       const order = blocks.length > 0 ? Math.max(...blocks.map((b) => b.order)) + 1 : 0
-      await addBlock({ ...data, order })
+      await addBlock({ name: data.name, kind: 'geral', order })
     }
   }
 

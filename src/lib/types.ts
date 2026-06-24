@@ -1,4 +1,4 @@
-export type BlockKind = 'despesa' | 'receita' | 'devo' | 'me_devem'
+export type BlockKind = 'geral' | 'despesa' | 'receita' | 'devo' | 'me_devem'
 export type EntryType = 'despesa' | 'receita'
 export type EntryStatus = 'pago' | 'parcial' | 'aberto'
 

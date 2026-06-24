@@ -36,8 +36,7 @@ export function BlockPanel({
   const blockEntries = entries.filter((e) => e.blockId === block.id)
   const { paid, open, total } = blockTotals(blockEntries)
 
-  const defaultType: EntryType =
-    block.kind === 'receita' || block.kind === 'me_devem' ? 'receita' : 'despesa'
+  const defaultType: EntryType = 'despesa'
 
   const handlePartialSave = () => {
     if (!partialEntry) return
@@ -53,12 +52,13 @@ export function BlockPanel({
       <div className="flex flex-wrap items-start justify-between gap-4 border-b border-slate-100 p-5">
         <div>
           <h2 className="text-lg font-bold text-slate-800">{block.name}</h2>
-          <p className="text-sm text-slate-500">
-            Pago {formatCurrency(paid)} · em aberto {formatCurrency(open)}
+          <p className="mt-1 text-sm text-slate-500">
+            Pago {formatCurrency(paid)} · em aberto {formatCurrency(Math.abs(open))}
+            {open < 0 && ' (a receber)'}
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <span className="text-2xl font-bold text-blue-600">{formatCurrency(total)}</span>
+          <span className="text-2xl font-bold text-blue-600">{formatCurrency(Math.abs(total))}</span>
           <div className="flex gap-1">
             <button
               type="button"

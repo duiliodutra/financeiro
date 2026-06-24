@@ -1,31 +1,17 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Plus, X } from 'lucide-react'
-import type { Block, BlockKind } from '../lib/types'
-
-const kindOptions: { value: BlockKind; label: string }[] = [
-  { value: 'despesa', label: 'Despesas (contas a pagar)' },
-  { value: 'receita', label: 'Receitas (entradas)' },
-  { value: 'devo', label: 'Eu devo (pessoas)' },
-  { value: 'me_devem', label: 'Me devem (pessoas)' },
-]
+import type { Block } from '../lib/types'
 
 interface Props {
   block?: Block
-  onSave: (data: { name: string; kind: BlockKind }) => Promise<void>
+  onSave: (data: { name: string }) => Promise<void>
   onClose: () => void
 }
 
 export function BlockModal({ block, onSave, onClose }: Props) {
   const [name, setName] = useState(block?.name ?? '')
-  const [kind, setKind] = useState<BlockKind>(block?.kind ?? 'despesa')
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
-
-  useEffect(() => {
-    setName(block?.name ?? '')
-    setKind(block?.kind ?? 'despesa')
-    setError('')
-  }, [block])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -34,7 +20,7 @@ export function BlockModal({ block, onSave, onClose }: Props) {
     setSaving(true)
     setError('')
     try {
-      await onSave({ name: name.trim(), kind })
+      await onSave({ name: name.trim() })
       onClose()
     } catch {
       setError('Não foi possível salvar. Tente novamente.')
@@ -56,28 +42,15 @@ export function BlockModal({ block, onSave, onClose }: Props) {
           </button>
         </div>
 
-        <label className="mt-4 block text-sm font-medium text-slate-700">Nome</label>
+        <label className="mt-4 block text-sm font-medium text-slate-700">Nome do bloco</label>
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="Ex: Diversas, João, Cartão Nubank..."
+          placeholder="Ex: Diversas, Mãe, Cartão Nubank..."
           className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
           required
           autoFocus
         />
-
-        <label className="mt-4 block text-sm font-medium text-slate-700">Tipo</label>
-        <select
-          value={kind}
-          onChange={(e) => setKind(e.target.value as BlockKind)}
-          className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
-        >
-          {kindOptions.map((o) => (
-            <option key={o.value} value={o.value}>
-              {o.label}
-            </option>
-          ))}
-        </select>
 
         {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
 

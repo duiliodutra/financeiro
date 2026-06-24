@@ -20,23 +20,23 @@ export function SummaryCards({
   personalBalance,
   totalPaid,
   totalOpen,
-  devoOpen,
-  meDevemOpen,
+  expenseOpen,
+  incomeOpen,
   closingForecast,
 }: {
   personalBalance: number
   totalPaid: number
   totalOpen: number
-  devoOpen: number
-  meDevemOpen: number
+  expenseOpen: number
+  incomeOpen: number
   closingForecast: number
 }) {
   const cards: CardProps[] = [
     { label: 'Saldo Pessoal', value: personalBalance, color: 'purple', subtitle: 'recebido − pago no mês' },
-    { label: 'Eu Devo', value: devoOpen, color: 'red', subtitle: 'em aberto' },
-    { label: 'Me Devem', value: meDevemOpen, color: 'green', subtitle: 'a receber' },
+    { label: 'Despesas em Aberto', value: expenseOpen, color: 'red', subtitle: 'a pagar' },
+    { label: 'Receitas em Aberto', value: incomeOpen, color: 'green', subtitle: 'a receber' },
     { label: 'Quitado / Recebido', value: totalPaid, color: 'green', subtitle: 'já pago ou recebido' },
-    { label: 'Saldo em Aberto', value: totalOpen, color: totalOpen >= 0 ? 'red' : 'green', subtitle: 'a pagar − a receber' },
+    { label: 'Saldo em Aberto', value: totalOpen, color: totalOpen >= 0 ? 'red' : 'green', subtitle: 'despesas − receitas' },
     {
       label: 'Prev. de Fechamento',
       value: closingForecast,
