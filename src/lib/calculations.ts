@@ -14,11 +14,11 @@ export function blockTotals(entries: Entry[]) {
   const despesas = entries.filter((e) => e.type === 'despesa')
   const receitas = entries.filter((e) => e.type === 'receita')
   const paid = entries.reduce((s, e) => s + e.paidAmount, 0)
-  const open =
-    despesas.reduce((s, e) => s + entryRemaining(e), 0) -
-    receitas.reduce((s, e) => s + entryRemaining(e), 0)
+  const despesaOpen = despesas.reduce((s, e) => s + entryRemaining(e), 0)
+  const receitaOpen = receitas.reduce((s, e) => s + entryRemaining(e), 0)
+  const open = despesaOpen - receitaOpen
   const total = entries.reduce((s, e) => s + e.amount, 0)
-  return { paid, open, total }
+  return { paid, open, total, despesaOpen, receitaOpen }
 }
 
 function sumByEntryType(entries: Entry[], type: Entry['type'], field: 'open' | 'paid') {
