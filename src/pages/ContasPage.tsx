@@ -30,7 +30,7 @@ export function ContasPage() {
     const map = new Map<string, number>()
     for (const block of sortedBlocks) {
       const blockEntries = entries.filter((e) => e.blockId === block.id)
-      map.set(block.id, blockTotals(blockEntries).total)
+      map.set(block.id, blockTotals(blockEntries).open)
     }
     return map
   }, [sortedBlocks, entries])
@@ -50,7 +50,7 @@ export function ContasPage() {
   }
 
   return (
-    <div>
+    <div className="min-w-0">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h2 className="text-xl font-bold text-slate-800">Contas Pessoais</h2>
@@ -96,8 +96,12 @@ export function ContasPage() {
                 }`}
               >
                 <div className="text-sm font-semibold text-slate-800">{block.name}</div>
-                <div className="text-sm font-bold text-blue-600">
-                  {formatCurrency(tabTotals.get(block.id) ?? 0)}
+                <div
+                  className={`text-sm font-bold ${
+                    (tabTotals.get(block.id) ?? 0) <= 0 ? 'text-green-600' : 'text-red-600'
+                  }`}
+                >
+                  {formatCurrency(Math.abs(tabTotals.get(block.id) ?? 0))}
                 </div>
               </button>
             ))}

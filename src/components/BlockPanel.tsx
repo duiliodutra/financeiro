@@ -34,7 +34,7 @@ export function BlockPanel({
   const [partialAmount, setPartialAmount] = useState('')
 
   const blockEntries = entries.filter((e) => e.blockId === block.id)
-  const { paid, open, total } = blockTotals(blockEntries)
+  const { paid, open } = blockTotals(blockEntries)
 
   const defaultType: EntryType = 'despesa'
 
@@ -48,7 +48,7 @@ export function BlockPanel({
   }
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
+    <div className="min-w-0 rounded-2xl border border-slate-200 bg-white shadow-sm">
       <div className="flex flex-wrap items-start justify-between gap-4 border-b border-slate-100 p-5">
         <div>
           <h2 className="text-lg font-bold text-slate-800">{block.name}</h2>
@@ -58,7 +58,9 @@ export function BlockPanel({
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <span className="text-2xl font-bold text-blue-600">{formatCurrency(Math.abs(total))}</span>
+          <span className={`text-2xl font-bold ${open <= 0 ? 'text-green-600' : 'text-red-600'}`}>
+            {formatCurrency(Math.abs(open))}
+          </span>
           <div className="flex gap-1">
             <button
               type="button"
