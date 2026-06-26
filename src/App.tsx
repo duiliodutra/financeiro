@@ -4,7 +4,6 @@ import { Layout } from './components/Layout'
 import { AuthProvider } from './context/AuthContext'
 import { MonthProvider } from './context/MonthContext'
 import { ContasPage } from './pages/ContasPage'
-import { DashboardPage } from './pages/DashboardPage'
 
 const basename = import.meta.env.BASE_URL.replace(/\/$/, '') || '/'
 
@@ -16,7 +15,7 @@ export default function App() {
           <MonthProvider>
             <Layout>
               <Routes>
-                <Route path="/" element={<DashboardPage />} />
+                <Route path="/" element={<ContasPage />} />
                 <Route path="/contas" element={<ContasPage />} />
               </Routes>
             </Layout>

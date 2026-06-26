@@ -1,4 +1,4 @@
-import type { Block, Entry, Forecast } from '../lib/types'
+import type { Entry } from '../lib/types'
 
 export function entryRemaining(entry: Entry): number {
   return Math.max(0, entry.amount - entry.paidAmount)
@@ -17,8 +17,7 @@ export function blockTotals(entries: Entry[]) {
   const despesaOpen = despesas.reduce((s, e) => s + entryRemaining(e), 0)
   const receitaOpen = receitas.reduce((s, e) => s + entryRemaining(e), 0)
   const open = despesaOpen - receitaOpen
-  const total = entries.reduce((s, e) => s + e.amount, 0)
-  return { paid, open, total, despesaOpen, receitaOpen }
+  return { paid, open, despesaOpen, receitaOpen }
 }
 
 function sumByEntryType(entries: Entry[], type: Entry['type'], field: 'open' | 'paid') {
@@ -48,21 +47,3 @@ export function summaryFromEntries(entries: Entry[]) {
   }
 }
 
-export function closingForecast(forecast: Forecast | null, summary: ReturnType<typeof summaryFromEntries>) {
-  if (!forecast) return 0
-  const pendingReceipts = Math.max(0, forecast.receiptForecast - forecast.alreadyReceived)
-  return forecast.moneyInAccount + pendingReceipts - summary.totalOpen
-}
-
-export function openByBlock(entries: Entry[], blocks: Block[]) {
-  return blocks
-    .map((block) => {
-      const blockEntries = entries.filter((e) => e.blockId === block.id)
-      const despesaOpen = sumByEntryType(blockEntries, 'despesa', 'open')
-      const receitaOpen = sumByEntryType(blockEntries, 'receita', 'open')
-      const netOpen = despesaOpen - receitaOpen
-      return { block, despesaOpen, receitaOpen, netOpen, entries: blockEntries }
-    })
-    .filter((item) => item.despesaOpen > 0 || item.receitaOpen > 0)
-    .sort((a, b) => Math.abs(b.netOpen) - Math.abs(a.netOpen))
-}

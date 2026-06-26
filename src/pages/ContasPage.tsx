@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react'
-import { Plus } from 'lucide-react'
+import { ArrowDownCircle, ArrowUpCircle, Plus, Scale } from 'lucide-react'
 import { useMonth } from '../context/MonthContext'
 import { useBlocks } from '../hooks/useBlocks'
 import { useEntries } from '../hooks/useEntries'
-import { blockTotals } from '../lib/calculations'
+import { blockTotals, summaryFromEntries } from '../lib/calculations'
 import { formatCurrency } from '../lib/format'
 import type { Block } from '../lib/types'
 import { BlockModal } from '../components/BlockModal'
@@ -25,6 +25,9 @@ export function ContasPage() {
   )
 
   const activeBlock = sortedBlocks.find((b) => b.id === activeBlockId) ?? sortedBlocks[0]
+
+  const summary = useMemo(() => summaryFromEntries(entries), [entries])
+  const saldoTotal = summary.incomeOpen - summary.expenseOpen
 
   const tabTotals = useMemo(() => {
     const map = new Map<string, number>()
@@ -51,7 +54,44 @@ export function ContasPage() {
 
   return (
     <div className="min-w-0">
-      <div className="flex flex-wrap items-center justify-between gap-4">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <div className="flex items-center gap-3 rounded-xl bg-green-50 px-4 py-3">
+          <ArrowUpCircle className="shrink-0 text-green-600" size={24} />
+          <div className="min-w-0">
+            <p className="text-xs font-medium uppercase tracking-wide text-green-700/70">Total Receitas</p>
+            <p className="truncate text-xl font-bold text-green-700">{formatCurrency(summary.incomeOpen)}</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-3 rounded-xl bg-red-50 px-4 py-3">
+          <ArrowDownCircle className="shrink-0 text-red-600" size={24} />
+          <div className="min-w-0">
+            <p className="text-xs font-medium uppercase tracking-wide text-red-700/70">Total Despesas</p>
+            <p className="truncate text-xl font-bold text-red-700">{formatCurrency(summary.expenseOpen)}</p>
+          </div>
+        </div>
+        <div
+          className={`flex items-center gap-3 rounded-xl px-4 py-3 ${
+            saldoTotal >= 0 ? 'bg-green-50' : 'bg-red-50'
+          }`}
+        >
+          <Scale className={`shrink-0 ${saldoTotal >= 0 ? 'text-green-600' : 'text-red-600'}`} size={24} />
+          <div className="min-w-0">
+            <p
+              className={`text-xs font-medium uppercase tracking-wide ${
+                saldoTotal >= 0 ? 'text-green-700/70' : 'text-red-700/70'
+              }`}
+            >
+              Saldo Total
+            </p>
+            <p className={`truncate text-xl font-bold ${saldoTotal >= 0 ? 'text-green-700' : 'text-red-700'}`}>
+              {saldoTotal >= 0 ? '+' : '-'}
+              {formatCurrency(Math.abs(saldoTotal))}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-6 flex flex-wrap items-center justify-between gap-4">
         <div>
           <h2 className="text-xl font-bold text-slate-800">Contas Pessoais</h2>
           <p className="text-sm text-slate-500">Despesas, recebimentos e compromissos pessoais</p>

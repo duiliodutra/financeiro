@@ -24,15 +24,6 @@ export interface Entry {
   createdAt: string
 }
 
-export interface Forecast {
-  id: string
-  year: number
-  month: number
-  moneyInAccount: number
-  receiptForecast: number
-  alreadyReceived: number
-}
-
 export interface MonthRef {
   year: number
   month: number
