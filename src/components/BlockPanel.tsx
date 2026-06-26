@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Pencil, Trash2 } from 'lucide-react'
+import { ArrowDownCircle, ArrowUpCircle, Pencil, Scale, Trash2 } from 'lucide-react'
 import type { Block, Entry, EntryType } from '../lib/types'
 import { blockTotals } from '../lib/calculations'
 import { formatCurrency } from '../lib/format'
@@ -49,31 +49,16 @@ export function BlockPanel({
 
   return (
     <div className="min-w-0 rounded-2xl border border-slate-200 bg-white shadow-sm">
-      <div className="flex flex-wrap items-start justify-between gap-4 border-b border-slate-100 p-5">
-        <div>
-          <h2 className="text-lg font-bold text-slate-800">{block.name}</h2>
-          <p className="mt-1 text-sm text-slate-500">
-            Pago {formatCurrency(paid)} · em aberto {formatCurrency(Math.abs(open))}
-            {open < 0 && ' (a receber)'}
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-4">
-          <div className="text-right">
-            <p className="text-xs font-medium uppercase tracking-wide text-slate-400">Receitas</p>
-            <p className="text-lg font-bold text-green-600">{formatCurrency(receitaOpen)}</p>
-          </div>
-          <div className="text-right">
-            <p className="text-xs font-medium uppercase tracking-wide text-slate-400">Despesas</p>
-            <p className="text-lg font-bold text-red-600">{formatCurrency(despesaOpen)}</p>
-          </div>
-          <div className="text-right">
-            <p className="text-xs font-medium uppercase tracking-wide text-slate-400">Saldo</p>
-            <p className={`text-2xl font-bold ${open <= 0 ? 'text-green-600' : 'text-red-600'}`}>
-              {open <= 0 ? '+' : '-'}
-              {formatCurrency(Math.abs(open))}
+      <div className="border-b border-slate-100 p-5">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <h2 className="text-lg font-bold text-slate-800">{block.name}</h2>
+            <p className="mt-1 text-sm text-slate-500">
+              Pago {formatCurrency(paid)} · em aberto {formatCurrency(Math.abs(open))}
+              {open < 0 && ' (a receber)'}
             </p>
           </div>
-          <div className="flex gap-1">
+          <div className="flex flex-wrap items-center gap-1.5">
             <button
               type="button"
               onClick={() => setEntryModal({ type: 'despesa' })}
@@ -110,6 +95,43 @@ export function BlockPanel({
               <Trash2 size={16} />
               Excluir
             </button>
+          </div>
+        </div>
+
+        <div className="mt-4 grid grid-cols-3 gap-3">
+          <div className="flex items-center gap-2 rounded-xl bg-green-50 px-3 py-2.5">
+            <ArrowUpCircle className="shrink-0 text-green-600" size={20} />
+            <div className="min-w-0">
+              <p className="text-[11px] font-medium uppercase tracking-wide text-green-700/70">Receitas</p>
+              <p className="truncate text-base font-bold text-green-700">{formatCurrency(receitaOpen)}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 rounded-xl bg-red-50 px-3 py-2.5">
+            <ArrowDownCircle className="shrink-0 text-red-600" size={20} />
+            <div className="min-w-0">
+              <p className="text-[11px] font-medium uppercase tracking-wide text-red-700/70">Despesas</p>
+              <p className="truncate text-base font-bold text-red-700">{formatCurrency(despesaOpen)}</p>
+            </div>
+          </div>
+          <div
+            className={`flex items-center gap-2 rounded-xl px-3 py-2.5 ${
+              open <= 0 ? 'bg-green-50' : 'bg-red-50'
+            }`}
+          >
+            <Scale className={`shrink-0 ${open <= 0 ? 'text-green-600' : 'text-red-600'}`} size={20} />
+            <div className="min-w-0">
+              <p
+                className={`text-[11px] font-medium uppercase tracking-wide ${
+                  open <= 0 ? 'text-green-700/70' : 'text-red-700/70'
+                }`}
+              >
+                Saldo
+              </p>
+              <p className={`truncate text-base font-bold ${open <= 0 ? 'text-green-700' : 'text-red-700'}`}>
+                {open <= 0 ? '+' : '-'}
+                {formatCurrency(Math.abs(open))}
+              </p>
+            </div>
           </div>
         </div>
       </div>
