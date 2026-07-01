@@ -3,21 +3,27 @@ import { formatCurrency } from '../lib/format'
 interface CardProps {
   label: string
   value: number
-  color: 'red' | 'emerald'
-  subtitle?: string
+  color: 'red' | 'green' | 'emerald'
 }
 
 const colors = {
   red: 'text-red-600',
+  green: 'text-green-600',
   emerald: 'text-emerald-600',
 }
 
 export function SummaryCards({
+  expenseOpen,
+  incomeOpen,
   closingForecast,
 }: {
+  expenseOpen: number
+  incomeOpen: number
   closingForecast: number
 }) {
   const cards: CardProps[] = [
+    { label: 'Despesas', value: expenseOpen, color: 'red' },
+    { label: 'Receitas', value: incomeOpen, color: 'green' },
     {
       label: 'Saldo',
       value: closingForecast,
@@ -41,7 +47,6 @@ export function SummaryCards({
             <p className={`mt-1 text-2xl font-bold ${colors[card.color]}`}>
               {formatCurrency(card.value)}
             </p>
-            {card.subtitle && <p className="text-xs text-slate-400">{card.subtitle}</p>}
           </div>
         ))}
       </div>
