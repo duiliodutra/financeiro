@@ -38,7 +38,6 @@ export function DashboardPage() {
   return (
     <div>
       <SummaryCards
-        totalOpen={summary.totalOpen}
         expenseOpen={summary.expenseOpen}
         incomeOpen={summary.incomeOpen}
         closingForecast={forecastValue}

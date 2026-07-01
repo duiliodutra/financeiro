@@ -17,12 +17,10 @@ const colors = {
 }
 
 export function SummaryCards({
-  totalOpen,
   expenseOpen,
   incomeOpen,
   closingForecast,
 }: {
-  totalOpen: number
   expenseOpen: number
   incomeOpen: number
   closingForecast: number
@@ -30,7 +28,6 @@ export function SummaryCards({
   const cards: CardProps[] = [
     { label: 'Despesas em Aberto', value: expenseOpen, color: 'red', subtitle: 'a pagar' },
     { label: 'Receitas em Aberto', value: incomeOpen, color: 'green', subtitle: 'a receber' },
-    { label: 'Saldo em Aberto', value: totalOpen, color: totalOpen >= 0 ? 'red' : 'green', subtitle: 'despesas − receitas' },
     {
       label: 'Prev. de Fechamento',
       value: closingForecast,
