@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { X } from 'lucide-react'
 import type { Entry, EntrySchedule, EntryScheduleMode, EntryType } from '../lib/types'
+import { formatCurrency } from '../lib/format'
 
 interface EntryFormData {
   type: EntryType
@@ -38,6 +39,8 @@ export function EntryModal({ entry, defaultType, onSave, onClose }: Props) {
   const [saving, setSaving] = useState(false)
 
   const isEditing = Boolean(entry)
+  const previewAmount = parseFloat(amount.replace(',', '.')) || 0
+  const previewCount = Math.max(2, Math.min(120, parseInt(scheduleCount, 10) || 2))
 
   useEffect(() => {
     setType(entry?.type ?? defaultType)
@@ -130,7 +133,7 @@ export function EntryModal({ entry, defaultType, onSave, onClose }: Props) {
         <div className="mt-4 grid grid-cols-2 gap-3">
           <div>
             <label className="block text-sm font-medium text-slate-700">
-              {scheduleMode === 'installments' && !isEditing ? 'Valor da parcela' : 'Valor total'}
+              {scheduleMode === 'installments' && !isEditing ? 'Valor de cada parcela' : 'Valor total'}
             </label>
             <input
               value={amount}
@@ -140,6 +143,11 @@ export function EntryModal({ entry, defaultType, onSave, onClose }: Props) {
               className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
               required
             />
+            {scheduleMode === 'installments' && !isEditing && previewAmount > 0 && (
+              <p className="mt-1 text-xs text-slate-500">
+                {previewCount} parcelas de {formatCurrency(previewAmount)}
+              </p>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700">Já pago/recebido</label>
