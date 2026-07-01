@@ -3,36 +3,25 @@ import { formatCurrency } from '../lib/format'
 interface CardProps {
   label: string
   value: number
-  color: 'blue' | 'purple' | 'orange' | 'red' | 'green' | 'emerald'
+  color: 'red' | 'emerald'
   subtitle?: string
 }
 
 const colors = {
-  blue: 'text-blue-600',
-  purple: 'text-purple-600',
-  orange: 'text-orange-500',
   red: 'text-red-600',
-  green: 'text-green-600',
   emerald: 'text-emerald-600',
 }
 
 export function SummaryCards({
-  expenseOpen,
-  incomeOpen,
   closingForecast,
 }: {
-  expenseOpen: number
-  incomeOpen: number
   closingForecast: number
 }) {
   const cards: CardProps[] = [
-    { label: 'Despesas em Aberto', value: expenseOpen, color: 'red', subtitle: 'a pagar' },
-    { label: 'Receitas em Aberto', value: incomeOpen, color: 'green', subtitle: 'a receber' },
     {
-      label: 'Prev. de Fechamento',
+      label: 'Saldo',
       value: closingForecast,
       color: closingForecast >= 0 ? 'emerald' : 'red',
-      subtitle: 'caixa + recebimentos − aberto',
     },
   ]
 

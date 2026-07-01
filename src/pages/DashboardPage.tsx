@@ -38,8 +38,6 @@ export function DashboardPage() {
   return (
     <div>
       <SummaryCards
-        expenseOpen={summary.expenseOpen}
-        incomeOpen={summary.incomeOpen}
         closingForecast={forecastValue}
       />
       <CashForecast forecast={forecast} onSave={saveForecast} />
