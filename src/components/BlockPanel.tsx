@@ -192,7 +192,7 @@ export function BlockPanel({
           </div>
         </div>
 
-        <div className="mt-4 grid grid-cols-3 gap-3">
+        <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
           <div className="flex items-center gap-2 rounded-xl bg-green-50 px-3 py-2.5">
             <ArrowUpCircle className="shrink-0 text-green-600" size={20} />
             <div className="min-w-0">
