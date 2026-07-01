@@ -65,7 +65,14 @@ export function EntryTable({
                     {entry.type === 'despesa' ? 'Despesa' : 'Receita'}
                   </span>
                 </td>
-                <td className="px-3 py-3 font-medium text-slate-800">{entry.description}</td>
+                <td className="px-3 py-3 font-medium text-slate-800">
+                  <div>{entry.description}</div>
+                  {entry.seriesMode === 'recurring' && entry.installmentNumber && entry.installmentTotal && (
+                    <div className="mt-0.5 text-xs font-normal text-slate-500">
+                      Recorrente {entry.installmentNumber}/{entry.installmentTotal}
+                    </div>
+                  )}
+                </td>
                 <td className="px-3 py-3 text-slate-600">{formatDate(entry.date)}</td>
                 <td className="px-3 py-3">
                   <div className="font-medium">{formatCurrency(entry.amount)}</div>

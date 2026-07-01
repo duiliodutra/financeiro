@@ -1,19 +1,28 @@
 import { useEffect, useState } from 'react'
 import { X } from 'lucide-react'
-import type { Entry, EntryType } from '../lib/types'
+import type { Entry, EntrySchedule, EntryScheduleMode, EntryType } from '../lib/types'
+
+interface EntryFormData {
+  type: EntryType
+  description: string
+  date: string
+  amount: number
+  paidAmount: number
+  schedule?: EntrySchedule
+}
 
 interface Props {
   entry?: Entry
   defaultType: EntryType
-  onSave: (data: {
-    type: EntryType
-    description: string
-    date: string
-    amount: number
-    paidAmount: number
-  }) => Promise<void>
+  onSave: (data: EntryFormData) => Promise<void>
   onClose: () => void
 }
+
+const scheduleOptions: { mode: EntryScheduleMode; label: string }[] = [
+  { mode: 'single', label: 'À vista' },
+  { mode: 'installments', label: 'Parcelado' },
+  { mode: 'recurring', label: 'Recorrente' },
+]
 
 export function EntryModal({ entry, defaultType, onSave, onClose }: Props) {
   const [type, setType] = useState<EntryType>(entry?.type ?? defaultType)
@@ -23,8 +32,12 @@ export function EntryModal({ entry, defaultType, onSave, onClose }: Props) {
   const [paidAmount, setPaidAmount] = useState(
     entry?.paidAmount != null ? String(entry.paidAmount) : '0',
   )
+  const [scheduleMode, setScheduleMode] = useState<EntryScheduleMode>('single')
+  const [scheduleCount, setScheduleCount] = useState('2')
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
+
+  const isEditing = Boolean(entry)
 
   useEffect(() => {
     setType(entry?.type ?? defaultType)
@@ -32,6 +45,8 @@ export function EntryModal({ entry, defaultType, onSave, onClose }: Props) {
     setDate(entry?.date ?? new Date().toISOString().slice(0, 10))
     setAmount(entry?.amount != null ? String(entry.amount) : '')
     setPaidAmount(entry?.paidAmount != null ? String(entry.paidAmount) : '0')
+    setScheduleMode('single')
+    setScheduleCount('2')
     setError('')
   }, [entry, defaultType])
 
@@ -39,6 +54,7 @@ export function EntryModal({ entry, defaultType, onSave, onClose }: Props) {
     e.preventDefault()
     const amt = parseFloat(amount.replace(',', '.')) || 0
     const paid = parseFloat(paidAmount.replace(',', '.')) || 0
+    const count = Math.max(2, Math.min(120, parseInt(scheduleCount, 10) || 2))
     if (!description.trim() || amt <= 0) return
 
     setSaving(true)
@@ -50,6 +66,7 @@ export function EntryModal({ entry, defaultType, onSave, onClose }: Props) {
         date,
         amount: amt,
         paidAmount: Math.min(paid, amt),
+        schedule: isEditing ? undefined : { mode: scheduleMode, count },
       })
       onClose()
     } catch {
@@ -63,7 +80,7 @@ export function EntryModal({ entry, defaultType, onSave, onClose }: Props) {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
       <form
         onSubmit={handleSubmit}
-        className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl"
+        className="max-h-[92vh] w-full max-w-md overflow-y-auto rounded-2xl bg-white p-6 shadow-xl"
       >
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-bold">{entry ? 'Editar Lançamento' : 'Novo Lançamento'}</h2>
@@ -132,6 +149,44 @@ export function EntryModal({ entry, defaultType, onSave, onClose }: Props) {
             />
           </div>
         </div>
+
+        {!isEditing && (
+          <div className="mt-4 rounded-xl border border-slate-200 p-3">
+            <label className="block text-sm font-medium text-slate-700">Forma de lançamento</label>
+            <div className="mt-2 grid grid-cols-3 gap-2">
+              {scheduleOptions.map((option) => (
+                <button
+                  key={option.mode}
+                  type="button"
+                  onClick={() => setScheduleMode(option.mode)}
+                  className={`rounded-lg px-2 py-2 text-xs font-semibold ${
+                    scheduleMode === option.mode
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  }`}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+
+            {scheduleMode !== 'single' && (
+              <div className="mt-3">
+                <label className="block text-sm font-medium text-slate-700">
+                  {scheduleMode === 'installments' ? 'Número de parcelas' : 'Quantidade de meses'}
+                </label>
+                <input
+                  type="number"
+                  min={2}
+                  max={120}
+                  value={scheduleCount}
+                  onChange={(e) => setScheduleCount(e.target.value)}
+                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+                />
+              </div>
+            )}
+          </div>
+        )}
 
         {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
 
