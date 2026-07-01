@@ -14,7 +14,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-4 py-4">
           <div>
             <h1 className="text-xl font-bold text-slate-800">Financeiro Deyse</h1>
-            <p className="text-sm text-slate-500">Contas pessoais, previsão e saldo</p>
+            <p className="text-sm text-slate-500">Contas pessoais e saldo</p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
             <nav className="flex gap-1 rounded-xl border border-slate-200 bg-slate-50 p-1">

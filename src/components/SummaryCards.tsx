@@ -3,32 +3,27 @@ import { formatCurrency } from '../lib/format'
 interface CardProps {
   label: string
   value: number
-  color: 'red' | 'green' | 'emerald'
+  color: 'red' | 'green'
 }
 
 const colors = {
   red: 'text-red-600',
   green: 'text-green-600',
-  emerald: 'text-emerald-600',
 }
 
 export function SummaryCards({
   expenseOpen,
   incomeOpen,
-  closingForecast,
+  balance,
 }: {
   expenseOpen: number
   incomeOpen: number
-  closingForecast: number
+  balance: number
 }) {
   const cards: CardProps[] = [
     { label: 'Despesas', value: expenseOpen, color: 'red' },
     { label: 'Receitas', value: incomeOpen, color: 'green' },
-    {
-      label: 'Saldo',
-      value: closingForecast,
-      color: closingForecast >= 0 ? 'emerald' : 'red',
-    },
+    { label: 'Saldo', value: balance, color: balance >= 0 ? 'green' : 'red' },
   ]
 
   return (
