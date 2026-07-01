@@ -1,118 +1,21 @@
 import { useState } from 'react'
 import { ArrowDownCircle, ArrowUpCircle, Pencil, Scale, Trash2 } from 'lucide-react'
-import type { Block, Entry, EntrySchedule, EntryType } from '../lib/types'
+import type { Block, Entry, EntryType } from '../lib/types'
 import { blockTotals } from '../lib/calculations'
 import { formatCurrency } from '../lib/format'
 import { EntryTable } from './EntryTable'
 import { EntryModal } from './EntryModal'
-
-type EntryInput = Omit<Entry, 'id' | 'createdAt' | 'status' | 'blockId' | 'month' | 'year'>
-
-interface EntryFormData extends EntryInput {
-  schedule?: EntrySchedule
-}
 
 interface Props {
   block: Block
   entries: Entry[]
   onEditBlock: (block: Block) => void
   onDeleteBlock: (id: string) => void
-  onAddEntry: (data: EntryInput) => Promise<void>
+  onAddEntry: (data: Omit<Entry, 'id' | 'createdAt' | 'status' | 'blockId' | 'month' | 'year'>) => Promise<void>
   onUpdateEntry: (id: string, data: Partial<Entry>) => Promise<void>
   onDeleteEntry: (id: string) => Promise<void>
   onPayEntry: (entry: Entry, amount?: number) => void
   onReopenEntry: (entry: Entry) => void
-}
-
-function moneyToCents(value: number): number {
-  return Math.round(value * 100)
-}
-
-function centsToMoney(value: number): number {
-  return Number((value / 100).toFixed(2))
-}
-
-function addMonthsToIsoDate(iso: string, monthsToAdd: number): string {
-  const [year, month, day] = iso.split('-').map(Number)
-  const target = new Date(year, month - 1 + monthsToAdd, 1)
-  const lastDay = new Date(target.getFullYear(), target.getMonth() + 1, 0).getDate()
-  const safeDay = Math.min(day, lastDay)
-  return [
-    target.getFullYear(),
-    String(target.getMonth() + 1).padStart(2, '0'),
-    String(safeDay).padStart(2, '0'),
-  ].join('-')
-}
-
-function createSeriesId(): string {
-  if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
-    return crypto.randomUUID()
-  }
-  return `series-${Date.now()}-${Math.random().toString(36).slice(2)}`
-}
-
-function entryInputFromForm(data: EntryFormData): EntryInput {
-  const entry: EntryInput = {
-    type: data.type,
-    description: data.description,
-    date: data.date,
-    amount: data.amount,
-    paidAmount: data.paidAmount,
-  }
-
-  if (data.seriesId) entry.seriesId = data.seriesId
-  if (data.seriesMode) entry.seriesMode = data.seriesMode
-  if (data.installmentNumber) entry.installmentNumber = data.installmentNumber
-  if (data.installmentTotal) entry.installmentTotal = data.installmentTotal
-
-  return entry
-}
-
-function expandScheduledEntries(data: EntryFormData): EntryInput[] {
-  const schedule = data.schedule ?? { mode: 'single', count: 1 }
-  const entry = entryInputFromForm(data)
-
-  if (schedule.mode === 'single' || schedule.count <= 1) {
-    return [entry]
-  }
-
-  const count = Math.max(2, Math.min(120, schedule.count))
-  const seriesId = createSeriesId()
-
-  if (schedule.mode === 'recurring') {
-    return Array.from({ length: count }, (_, index) => ({
-      ...entry,
-      date: addMonthsToIsoDate(entry.date, index),
-      paidAmount: index === 0 ? entry.paidAmount : 0,
-      seriesId,
-      seriesMode: 'recurring',
-      installmentNumber: index + 1,
-      installmentTotal: count,
-    }))
-  }
-
-  const totalCents = moneyToCents(entry.amount)
-  let remainingPaidCents = moneyToCents(entry.paidAmount)
-  const baseCents = Math.floor(totalCents / count)
-  const extraCents = totalCents % count
-
-  return Array.from({ length: count }, (_, index) => {
-    const amountCents = baseCents + (index < extraCents ? 1 : 0)
-    const paidCents = Math.min(amountCents, remainingPaidCents)
-    remainingPaidCents -= paidCents
-
-    return {
-      ...entry,
-      description: `${entry.description} (${index + 1}/${count})`,
-      date: addMonthsToIsoDate(entry.date, index),
-      amount: centsToMoney(amountCents),
-      paidAmount: centsToMoney(paidCents),
-      seriesId,
-      seriesMode: 'installments',
-      installmentNumber: index + 1,
-      installmentTotal: count,
-    }
-  })
 }
 
 export function BlockPanel({
@@ -257,10 +160,9 @@ export function BlockPanel({
           onClose={() => setEntryModal(null)}
           onSave={async (data) => {
             if (entryModal.entry) {
-              await onUpdateEntry(entryModal.entry.id, entryInputFromForm(data))
+              await onUpdateEntry(entryModal.entry.id, data)
             } else {
-              const scheduledEntries = expandScheduledEntries(data)
-              await Promise.all(scheduledEntries.map((entryData) => onAddEntry(entryData)))
+              await onAddEntry(data)
             }
           }}
         />
