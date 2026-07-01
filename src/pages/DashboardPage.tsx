@@ -38,8 +38,6 @@ export function DashboardPage() {
   return (
     <div>
       <SummaryCards
-        personalBalance={summary.personalBalance}
-        totalPaid={summary.totalPaid}
         totalOpen={summary.totalOpen}
         expenseOpen={summary.expenseOpen}
         incomeOpen={summary.incomeOpen}

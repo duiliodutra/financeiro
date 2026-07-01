@@ -17,25 +17,19 @@ const colors = {
 }
 
 export function SummaryCards({
-  personalBalance,
-  totalPaid,
   totalOpen,
   expenseOpen,
   incomeOpen,
   closingForecast,
 }: {
-  personalBalance: number
-  totalPaid: number
   totalOpen: number
   expenseOpen: number
   incomeOpen: number
   closingForecast: number
 }) {
   const cards: CardProps[] = [
-    { label: 'Saldo Pessoal', value: personalBalance, color: 'purple', subtitle: 'recebido − pago no mês' },
     { label: 'Despesas em Aberto', value: expenseOpen, color: 'red', subtitle: 'a pagar' },
     { label: 'Receitas em Aberto', value: incomeOpen, color: 'green', subtitle: 'a receber' },
-    { label: 'Quitado / Recebido', value: totalPaid, color: 'green', subtitle: 'já pago ou recebido' },
     { label: 'Saldo em Aberto', value: totalOpen, color: totalOpen >= 0 ? 'red' : 'green', subtitle: 'despesas − receitas' },
     {
       label: 'Prev. de Fechamento',
