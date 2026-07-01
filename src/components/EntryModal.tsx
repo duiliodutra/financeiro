@@ -55,6 +55,7 @@ export function EntryModal({ entry, defaultType, onSave, onClose }: Props) {
     const amt = parseFloat(amount.replace(',', '.')) || 0
     const paid = parseFloat(paidAmount.replace(',', '.')) || 0
     const count = Math.max(2, Math.min(120, parseInt(scheduleCount, 10) || 2))
+    const paidLimit = scheduleMode === 'installments' && !isEditing ? amt * count : amt
     if (!description.trim() || amt <= 0) return
 
     setSaving(true)
@@ -65,7 +66,7 @@ export function EntryModal({ entry, defaultType, onSave, onClose }: Props) {
         description: description.trim(),
         date,
         amount: amt,
-        paidAmount: Math.min(paid, amt),
+        paidAmount: Math.min(paid, paidLimit),
         schedule: isEditing ? undefined : { mode: scheduleMode, count },
       })
       onClose()
@@ -128,7 +129,9 @@ export function EntryModal({ entry, defaultType, onSave, onClose }: Props) {
 
         <div className="mt-4 grid grid-cols-2 gap-3">
           <div>
-            <label className="block text-sm font-medium text-slate-700">Valor total</label>
+            <label className="block text-sm font-medium text-slate-700">
+              {scheduleMode === 'installments' && !isEditing ? 'Valor da parcela' : 'Valor total'}
+            </label>
             <input
               value={amount}
               onChange={(e) => setAmount(e.target.value)}

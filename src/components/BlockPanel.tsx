@@ -91,21 +91,18 @@ function expandScheduledEntries(data: EntryFormData): EntryInput[] {
     }))
   }
 
-  const totalCents = moneyToCents(entry.amount)
-  let remainingPaidCents = moneyToCents(entry.paidAmount)
-  const baseCents = Math.floor(totalCents / count)
-  const extraCents = totalCents % count
+  const installmentCents = moneyToCents(entry.amount)
+  let remainingPaidCents = Math.min(moneyToCents(entry.paidAmount), installmentCents * count)
 
   return Array.from({ length: count }, (_, index) => {
-    const amountCents = baseCents + (index < extraCents ? 1 : 0)
-    const paidCents = Math.min(amountCents, remainingPaidCents)
+    const paidCents = Math.min(installmentCents, remainingPaidCents)
     remainingPaidCents -= paidCents
 
     return {
       ...entry,
       description: `${entry.description} (${index + 1}/${count})`,
       date: addMonthsToIsoDate(entry.date, index),
-      amount: centsToMoney(amountCents),
+      amount: centsToMoney(installmentCents),
       paidAmount: centsToMoney(paidCents),
       seriesId,
       seriesMode: 'installments',
